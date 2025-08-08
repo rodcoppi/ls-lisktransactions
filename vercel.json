@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "luckysea-dashboard",
+  "name": "luckysea-lisk-analytics",
   "build": {
     "env": {
       "NODE_ENV": "production",
@@ -10,17 +10,8 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 60
-    },
-    "src/app/api/cron/**/*.ts": {
-      "maxDuration": 300
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/update-cache",
-      "schedule": "0 * * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/api/contract-data",

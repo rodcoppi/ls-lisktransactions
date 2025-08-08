@@ -448,38 +448,110 @@ export class CacheManager {
     return cache?.lastUpdate || null;
   }
 
+  // Date formatting utility for precise date display
+  private formatDateLong(dateString: string): string {
+    const date = new Date(dateString + 'T00:00:00Z');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const month = date.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+    const year = date.getUTCFullYear();
+    return `${day} ${month}, ${year}`;
+  }
+
+  // Find the latest date with complete 24h data
+  private findLatestCompleteDate(cache: OptimizedCache): string {
+    const now = new Date();
+    
+    // Check last 7 days to find the most recent complete day
+    for (let i = 1; i <= 7; i++) {
+      const checkDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateKey = checkDate.toISOString().split('T')[0];
+      
+      // Check if this date has complete hourly data (24 hours)
+      if (cache.recentHourly && cache.recentHourly[dateKey]) {
+        const hourlyArray = cache.recentHourly[dateKey];
+        const totalTxs = hourlyArray.reduce((sum, count) => sum + count, 0);
+        
+        // Consider complete if has reasonable transaction count and matches daily total
+        if (totalTxs > 1000 && cache.dailyTotals && cache.dailyTotals[dateKey] === totalTxs) {
+          return dateKey;
+        }
+      }
+    }
+    
+    // Fallback to most recent date with daily data
+    if (cache.dailyTotals) {
+      const dates = Object.keys(cache.dailyTotals).sort().reverse();
+      for (const dateKey of dates) {
+        if (cache.dailyTotals[dateKey] > 1000) {
+          return dateKey;
+        }
+      }
+    }
+    
+    // Ultimate fallback
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return yesterday.toISOString().split('T')[0];
+  }
+
   private generateAnalysisFromOptimized(cache: OptimizedCache): any {
     const now = new Date();
-    // Use yesterday's data for more accurate representation (since updates happen at 00:00 UTC)
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const yesterdayKeyUTC = yesterday.toISOString().split('T')[0];
+    
+    // Find the latest complete date instead of assuming yesterday
+    const latestCompleteDate = this.findLatestCompleteDate(cache);
+    const latestCompleteDateFormatted = this.formatDateLong(latestCompleteDate);
     
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Calcular dados de ontem (último dia completo)
-    const yesterdayTxs = (cache.recentHourly && cache.recentHourly[yesterdayKeyUTC]) 
-      ? cache.recentHourly[yesterdayKeyUTC].reduce((sum, count) => sum + count, 0) 
+    // Calculate data for the latest complete date with cross-validation
+    const hourlySum = (cache.recentHourly && cache.recentHourly[latestCompleteDate]) 
+      ? cache.recentHourly[latestCompleteDate].reduce((sum, count) => sum + count, 0) 
       : 0;
+    const dailyTotal = cache.dailyTotals?.[latestCompleteDate] || 0;
+    
+    // Cross-validation: hourly sum should match daily total
+    if (hourlySum > 0 && dailyTotal > 0 && hourlySum !== dailyTotal) {
+      console.warn(`⚠️ Data mismatch for ${latestCompleteDate}: hourly sum=${hourlySum}, daily total=${dailyTotal}`);
+    }
+    
+    // Use hourly sum if available and matches, otherwise use daily total
+    const latestDayTxs = (hourlySum > 0 && hourlySum === dailyTotal) ? hourlySum : dailyTotal;
 
-    // Calcular dados semanais
-    let thisWeekTxs = 0;
+    // Calculate precise weekly data (7 complete days ending with latest complete date)
+    let weeklyTxs = 0;
+    let weeklyPeriod = '';
     if (cache.dailyTotals) {
+      const latestDate = new Date(latestCompleteDate + 'T00:00:00Z');
+      const weekStartDate = new Date(latestDate.getTime() - 6 * 24 * 60 * 60 * 1000);
+      
       for (let i = 0; i < 7; i++) {
-        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const date = new Date(weekStartDate.getTime() + i * 24 * 60 * 60 * 1000);
         const dateKey = date.toISOString().split('T')[0];
-        thisWeekTxs += cache.dailyTotals[dateKey] || 0;
+        weeklyTxs += cache.dailyTotals[dateKey] || 0;
       }
+      
+      const weekStartFormatted = this.formatDateLong(weekStartDate.toISOString().split('T')[0]);
+      weeklyPeriod = `${weekStartFormatted} - ${latestCompleteDateFormatted}`;
     }
 
-    // Calcular dados mensais  
-    let thisMonthTxs = 0;
+    // Calculate precise monthly data (from start of month through latest complete date)
+    let monthlyTxs = 0;
+    let monthlyPeriod = '';
     if (cache.dailyTotals) {
-      for (let i = 0; i < 30; i++) {
-        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        const dateKey = date.toISOString().split('T')[0];
-        thisMonthTxs += cache.dailyTotals[dateKey] || 0;
+      const latestDate = new Date(latestCompleteDate + 'T00:00:00Z');
+      const monthStart = new Date(latestDate.getUTCFullYear(), latestDate.getUTCMonth(), 1);
+      
+      const currentDate = new Date(monthStart);
+      while (currentDate <= latestDate) {
+        const dateKey = currentDate.toISOString().split('T')[0];
+        monthlyTxs += cache.dailyTotals[dateKey] || 0;
+        currentDate.setUTCDate(currentDate.getUTCDate() + 1);
       }
+      
+      const monthName = latestDate.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+      const year = latestDate.getUTCFullYear();
+      const latestDay = latestDate.getUTCDate().toString().padStart(2, '0');
+      monthlyPeriod = `${monthName} ${year} (through ${latestDay})`;
     }
 
     // Calculate average per day using ONLY complete days (UTC-based)
@@ -532,14 +604,32 @@ export class CacheManager {
     console.log('Sample daily data:', cache.dailyTotals ? Object.entries(cache.dailyTotals).slice(0, 3) : 'none');
 
     return {
-      hourlyData: (cache.recentHourly && cache.recentHourly[yesterdayKeyUTC]) 
-        ? Object.fromEntries(cache.recentHourly[yesterdayKeyUTC].map((count, hour) => [hour, count]))
+      // Precise date-based data
+      latestCompleteDate,
+      latestCompleteDateFormatted,
+      weeklyPeriod,
+      monthlyPeriod,
+      
+      // Numerical data
+      latestDayTxs,
+      weeklyTxs,
+      monthlyTxs,
+      
+      // Hourly data for the latest complete date
+      hourlyData: (cache.recentHourly && cache.recentHourly[latestCompleteDate]) 
+        ? Object.fromEntries(cache.recentHourly[latestCompleteDate].map((count, hour) => [hour, count]))
         : {},
+      
+      // Raw data for charts
       dailyData: cache.dailyTotals || {},
       monthlyData: cache.monthlyTotals || {},
-      todayTxs: yesterdayTxs, // Renamed for backwards compatibility
-      thisWeekTxs,
-      thisMonthTxs,
+      
+      // Legacy compatibility (will be removed after frontend update)
+      todayTxs: latestDayTxs,
+      thisWeekTxs: weeklyTxs,
+      thisMonthTxs: monthlyTxs,
+      
+      // Metadata
       totalDaysActive: cache.totalDaysActive || 0,
       avgTxsPerDay,
       avgTxsPerMonth

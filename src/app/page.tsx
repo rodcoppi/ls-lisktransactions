@@ -7,22 +7,38 @@ interface LiskStats {
 }
 
 interface ContractAnalysis {
+  // Precise date-based data
+  latestCompleteDate?: string;
+  latestCompleteDateFormatted?: string;
+  weeklyPeriod?: string;
+  monthlyPeriod?: string;
+  
+  // Numerical data with precise calculations
+  latestDayTxs?: number;
+  weeklyTxs?: number;
+  monthlyTxs?: number;
+  
+  // Chart data
   hourlyData: { [key: number]: number };
   dailyData: { [key: string]: number };
-  weeklyData: { [key: string]: number };
+  weeklyData?: { [key: string]: number };
   monthlyData: { [key: string]: number };
+  
+  // Legacy fields (for compatibility)
   todayTxs: number;
   thisWeekTxs: number;
-  lastWeekTxs: number;
+  lastWeekTxs?: number;
   thisMonthTxs: number;
+  
+  // Metadata
   totalDaysActive: number;
-  totalMonthsActive: number;
+  totalMonthsActive?: number;
   avgTxsPerDay: number;
   avgTxsPerMonth: number;
-  peakDay: { day: string; count: number };
-  peakHour: { hour: number; count: number };
-  lastTxTime: string;
-  deploymentDate: string;
+  peakDay?: { day: string; count: number };
+  peakHour?: { hour: number; count: number };
+  lastTxTime?: string;
+  deploymentDate?: string;
 }
 
 interface ContractData {
@@ -480,7 +496,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Yesterday's Transactions (Last Complete Day) */}
+          {/* Latest Complete Day Transactions */}
           <div style={{ 
             background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
             padding: '25px', 
@@ -512,10 +528,13 @@ export default function Dashboard() {
               animation: 'shimmer 3s infinite 1s'
             }}></div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
-              📊 Yesterday&apos;s Transactions
+              📊 {analysis?.latestCompleteDateFormatted || 'Loading...'}
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
-              {analysis?.todayTxs?.toLocaleString() || 0}
+              {analysis?.latestDayTxs?.toLocaleString() || 0} transactions
+            </p>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
+              Complete 24h data
             </p>
           </div>
 
@@ -551,10 +570,13 @@ export default function Dashboard() {
               animation: 'shimmer 3s infinite 1.5s'
             }}></div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
-              📈 This Week
+              📈 7-Day Period
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
-              {analysis?.thisWeekTxs?.toLocaleString() || 0}
+              {analysis?.weeklyTxs?.toLocaleString() || 0} transactions
+            </p>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
+              {analysis?.weeklyPeriod || 'Loading period...'}
             </p>
           </div>
 
@@ -590,10 +612,13 @@ export default function Dashboard() {
               animation: 'shimmer 3s infinite 2s'
             }}></div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
-              🗓️ This Month
+              🗓️ Month Progress
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
-              {analysis?.thisMonthTxs?.toLocaleString() || 0}
+              {analysis?.monthlyTxs?.toLocaleString() || 0} transactions
+            </p>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
+              {analysis?.monthlyPeriod || 'Loading period...'}
             </p>
           </div>
 
@@ -744,7 +769,7 @@ export default function Dashboard() {
             color: '#02FFD2', 
             textShadow: '0 0 20px rgba(2,255,210,0.3)',
             position: 'relative'
-          }}>📈 Transactions by Hour (Yesterday UTC)</h2>
+          }}>📈 Hourly Activity - {analysis?.latestCompleteDateFormatted || 'Loading...'} (UTC)</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '10px' }}>
             {Array.from({ length: 24 }, (_, hour) => {
               const count = analysis?.hourlyData?.[hour] || 0;

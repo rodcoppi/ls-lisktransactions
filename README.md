@@ -76,7 +76,8 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 ### Data Sources
 - **Blockscout API** - Lisk blockchain explorer
 - **Contract Address**: `0xf18485f75551FFCa4011C32a0885ea8C22336840`
-- **Cache Strategy**: Optimized for Vercel Free Tier (1,000 invocations/month)
+- **Update Schedule**: Daily at 00:00 UTC via Vercel Cron
+- **Cache Strategy**: Optimized for Vercel Free Tier
 
 ## 🔧 Technical Stack
 
@@ -146,6 +147,26 @@ npm run build
 
 # Start production server
 npm start
+```
+
+## 🕒 Automated Updates
+
+### Daily Cron Job
+- **Schedule**: Every day at 00:00 UTC
+- **Endpoint**: `/api/cron/update-cache`
+- **Function**: Fetches new transactions since last update
+- **Vercel Compatibility**: Uses Free Tier daily cron allowance
+
+### How It Works
+1. **Incremental Updates**: Only fetches transactions newer than `lastBlockNumber`
+2. **Smart Caching**: Rotates old hourly data to daily totals
+3. **UTC Consistency**: All timestamps normalized to UTC
+4. **Error Handling**: Graceful fallback if API fails
+
+### Manual Update (Optional)
+```bash
+# Force cache update via API
+curl https://your-app.vercel.app/api/cron/update-cache
 ```
 
 ## 🛠️ Development

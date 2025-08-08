@@ -1,3 +1,9 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -19,6 +25,12 @@ const nextConfig = {
     },
   },
   webpack: (config, { dev, isServer }) => {
+    // Add path mapping support for TypeScript aliases
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.join(__dirname, 'src'),
+    };
+
     // Optimize bundle size
     if (!dev && !isServer) {
       config.resolve.alias = {

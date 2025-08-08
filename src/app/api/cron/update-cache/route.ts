@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cacheManager } from '../../../../lib/index';
+import { cacheManager } from '@/lib/index';
 
 // 🎲 LuckySea Analytics - Daily Cache Update Cron Job
 // Runs at 00:00 UTC daily to fetch new transactions

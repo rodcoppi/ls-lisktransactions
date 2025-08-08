@@ -2,9 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 const CONTRACT_ADDRESS = '0xf18485f75551FFCa4011C32a0885ea8C22336840';
-const CACHE_FILE = process.env.NODE_ENV === 'production' 
-  ? '/tmp/contract-cache.json'  // Vercel filesystem
-  : path.join(process.cwd(), 'src/data/contract-cache.json'); // Local development
+const CACHE_FILE = path.join(process.cwd(), 'src/data/contract-cache.json'); // Always use pre-populated cache
+const TEMP_CACHE = '/tmp/contract-cache.json';  // For updates in production
 const UPDATE_INTERVAL = 24 * 60 * 60 * 1000; // 24 horas (Daily cron handles updates)
 
 interface Transaction {
@@ -63,8 +62,8 @@ export class CacheManager {
   }
 
   private startAutoUpdate() {
-    // Only start auto-update in development mode
-    // Production uses daily cron job at /api/cron/update-cache
+    // NEVER auto-update in production - preserve Vercel limits
+    // Only manual updates via daily cron job at /api/cron/update-cache
     if (process.env.NODE_ENV !== 'production') {
       console.log('🔄 Development mode: Starting auto-update timer');
       
@@ -78,7 +77,8 @@ export class CacheManager {
         this.updateCache();
       }, UPDATE_INTERVAL);
     } else {
-      console.log('🎯 Production mode: Using daily cron job for updates');
+      console.log('🎯 Production mode: Using ONLY pre-populated cache (no auto-updates)');
+      // NO AUTO-UPDATE IN PRODUCTION - Preserve Vercel free tier limits
     }
   }
 
@@ -330,11 +330,24 @@ export class CacheManager {
 
   private loadOptimizedCache(): OptimizedCache | null {
     try {
+      // In production, try temp cache first, then fallback to pre-populated
+      if (process.env.NODE_ENV === 'production') {
+        if (fs.existsSync(TEMP_CACHE)) {
+          const data = fs.readFileSync(TEMP_CACHE, 'utf8');
+          return JSON.parse(data);
+        }
+      }
+      
+      // Always use pre-populated cache as fallback/default
       if (!fs.existsSync(CACHE_FILE)) {
+        console.error('❌ CRITICAL: Pre-populated cache not found at', CACHE_FILE);
         return null;
       }
+      
       const data = fs.readFileSync(CACHE_FILE, 'utf8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      console.log(`✅ Loaded pre-populated cache: ${parsed.totalTransactions} transactions`);
+      return parsed;
     } catch (error) {
       console.error('❌ Failed to load cache:', error);
       return null;
@@ -348,12 +361,15 @@ export class CacheManager {
 
   private saveOptimizedCache(data: OptimizedCache): void {
     try {
-      const dir = path.dirname(CACHE_FILE);
+      // In production, save updates to temp location to preserve pre-populated cache
+      const saveFile = process.env.NODE_ENV === 'production' ? TEMP_CACHE : CACHE_FILE;
+      
+      const dir = path.dirname(saveFile);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2));
-      console.log(`💾 Optimized cache saved: ${data.totalTransactions} transactions`);
+      fs.writeFileSync(saveFile, JSON.stringify(data, null, 2));
+      console.log(`💾 Optimized cache saved to ${saveFile}: ${data.totalTransactions} transactions`);
     } catch (error) {
       console.error('❌ Failed to save cache:', error);
     }

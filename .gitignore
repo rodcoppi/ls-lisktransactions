@@ -108,9 +108,8 @@ Dockerfile.prod
 .cache/
 *.cache
 
-# Contract data cache
-/src/data/
-contract-cache.json
+# Keep pre-populated cache for production deployment
+# /src/data/contract-cache.json
 
 # Reports
 /reports

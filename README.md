@@ -1,414 +1,254 @@
-# Lisk Counter Dashboard - Testing Infrastructure
+# 🎲 LuckySea Lisk Analytics Dashboard
 
-A comprehensive testing infrastructure setup for a Next.js 14 dashboard
-application with TypeScript, featuring Jest, React Testing Library, Cypress, and
-robust quality gates.
+[![Next.js](https://img.shields.io/badge/Next.js-14.0.4-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.17-38B2AC.svg)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black.svg)](https://vercel.com/)
 
-## 🚀 Overview
+A beautiful, real-time analytics dashboard for Lisk blockchain transactions, featuring the signature LuckySea design system with glassmorphism effects and smooth animations.
 
-This project demonstrates a complete Quality Assurance setup with:
+## ✨ Features
 
-- **Unit Testing**: Jest + React Testing Library with 90%+ coverage target
-- **E2E Testing**: Cypress with custom commands and page object models
-- **Code Quality**: ESLint with strict rules and Prettier formatting
-- **Pre-commit Hooks**: Husky + lint-staged for quality gates
-- **API Mocking**: Mock Service Worker (MSW) for testing
-- **CI/CD**: GitHub Actions workflow with comprehensive testing pipeline
+- **🎨 LuckySea Design System** - Premium glassmorphism effects with signature color palette (#05202E, #041924, #02FFD2)
+- **⚡ Real-time Analytics** - Live transaction monitoring with smart polling
+- **🕒 UTC Timezone Support** - Consistent timezone handling across all data
+- **📊 Interactive Charts** - Beautiful Recharts visualizations with animations
+- **💾 Pre-populated Cache** - 24,955+ historical transactions included
+- **🚀 Vercel Optimized** - Efficient caching strategy for Free Tier limits
+- **📱 Responsive Design** - Perfect on desktop, tablet, and mobile
+- **🔄 Auto-refresh** - Smart updates every hour with exponential backoff
 
-## 📊 Coverage & Quality Targets
+## 🎯 Live Demo
 
-- **Test Coverage**: 90%+ (branches, functions, lines, statements)
-- **ESLint**: Zero warnings policy
-- **TypeScript**: Strict mode with no implicit any
-- **Pre-commit**: Auto-fix and quality checks before every commit
+🔗 **[View Live Dashboard](https://ls-lisktransactions.vercel.app/)**
 
-## 🛠 Tech Stack
-
-### Core Technologies
-
-- **Next.js 14** - React framework with App Router
-- **TypeScript 5.3** - Strict type checking
-- **React 18** - Component library
-
-### Testing Framework
-
-- **Jest 29** - Test runner and assertion library
-- **React Testing Library** - Component testing utilities
-- **Cypress 13** - End-to-end testing framework
-- **Mock Service Worker** - API mocking for tests
-
-### Code Quality
-
-- **ESLint** - Linting with strict rules
-- **Prettier** - Code formatting
-- **Husky** - Git hooks management
-- **lint-staged** - Staged files processing
-- **Commitlint** - Conventional commit messages
-
-## 📁 Project Structure
-
-```
-├── .github/
-│   └── workflows/
-│       └── ci.yml                    # CI/CD pipeline
-├── .husky/                           # Git hooks
-├── cypress/                          # E2E tests
-│   ├── e2e/                         # Test specifications
-│   ├── fixtures/                    # Test data
-│   └── support/
-│       ├── commands.ts              # Custom commands
-│       ├── e2e.ts                   # Global configuration
-│       └── page-objects/            # Page object models
-├── src/
-│   ├── components/                   # React components
-│   │   └── __tests__/               # Component tests
-│   ├── hooks/                       # Custom hooks
-│   │   └── __tests__/               # Hook tests
-│   ├── test/                        # Test utilities
-│   │   ├── mocks/                   # MSW handlers
-│   │   ├── setup.ts                 # Jest setup
-│   │   └── test-utils.tsx           # Custom render functions
-│   ├── types/                       # TypeScript definitions
-│   └── utils/                       # Utility functions
-│       └── __tests__/               # Utility tests
-├── cypress.config.ts                 # Cypress configuration
-├── jest.config.js                    # Jest configuration (in package.json)
-├── tsconfig.json                     # TypeScript configuration
-├── .eslintrc.json                    # ESLint configuration
-├── .prettierrc.json                  # Prettier configuration
-├── commitlint.config.js              # Commit message rules
-└── package.json                      # Dependencies and scripts
-```
-
-## 🚦 Getting Started
+## 🏗️ Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 9+
+- Node.js 18.0.0 or higher
+- npm 9.0.0 or higher
 
 ### Installation
 
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd lisk-counter-dashboard
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Setup git hooks**
-   ```bash
-   npx husky install
-   ```
-
-## 🧪 Testing Commands
-
-### Unit Tests
-
 ```bash
-# Run all unit tests
-npm test
+# Clone the repository
+git clone https://github.com/rodcoppi/ls-lisktransactions.git
+cd ls-lisktransactions
 
-# Watch mode for development
-npm run test:watch
+# Install dependencies
+npm install
 
-# Coverage report
-npm run test:coverage
-
-# CI mode (no watch, with coverage)
-npm run test:ci
+# Start development server
+npm run dev
 ```
 
-### E2E Tests
+Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
+
+## 🎨 Design System
+
+### Color Palette
+- **Primary Dark**: `#05202E` - Main background and containers
+- **Secondary Dark**: `#041924` - Cards and secondary elements  
+- **Accent Cyan**: `#02FFD2` - Highlights, borders, and CTAs
+- **Status Green**: `#10B981` - Success states and online indicators
+
+### Typography
+- **Font Family**: Inter (fallback: system fonts)
+- **Headings**: Bold weights with proper contrast
+- **Body**: Regular weight optimized for readability
+
+### Effects
+- **Glassmorphism**: `backdrop-blur-md` with semi-transparent backgrounds
+- **Animations**: Smooth transitions and hover effects
+- **Gradients**: Subtle overlays and accent highlights
+
+## 📊 Data Analytics
+
+### Metrics Displayed
+- **Total Transactions** - All-time contract interactions
+- **Today's Activity** - Current day transactions (UTC)
+- **Weekly Trends** - 7-day transaction patterns  
+- **Monthly Overview** - 30-day aggregated data
+- **Hourly Breakdown** - Real-time hourly distribution
+- **Average Daily** - Smart calculation excluding incomplete days
+
+### Data Sources
+- **Blockscout API** - Lisk blockchain explorer
+- **Contract Address**: `0xf18485f75551FFCa4011C32a0885ea8C22336840`
+- **Cache Strategy**: Optimized for Vercel Free Tier (1,000 invocations/month)
+
+## 🔧 Technical Stack
+
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **Recharts** - Chart visualization library
+- **Lucide React** - Icon system
+
+### Backend
+- **API Routes** - Next.js serverless functions
+- **File System Cache** - JSON-based data persistence
+- **Smart Polling** - Exponential backoff strategy
+
+### Deployment
+- **Vercel** - Serverless deployment platform
+- **Edge Runtime** - Global CDN distribution
+- **Automatic Deployments** - Git-based CI/CD
+
+## ⚙️ Configuration
+
+### Environment Variables
+```bash
+# Optional: Add to .env.local for custom configuration
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+```
+
+### Cache Settings
+- **Update Interval**: 1 hour (Vercel Free Tier optimized)
+- **Retention**: Daily totals (historical) + Hourly data (recent 48h)
+- **Location**: `/tmp/contract-cache.json` (production) or `src/data/contract-cache.json` (development)
+
+## 📱 Responsive Breakpoints
+
+```css
+sm: 640px   /* Mobile landscape */
+md: 768px   /* Tablet portrait */  
+lg: 1024px  /* Desktop */
+xl: 1280px  /* Large desktop */
+```
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. **Connect Repository**
+   ```bash
+   # Push to GitHub
+   git push origin main
+   ```
+
+2. **Deploy on Vercel**
+   - Import project from GitHub
+   - Configure build settings (auto-detected)
+   - Deploy with one click
+
+3. **Custom Domain** (Optional)
+   - Add custom domain in Vercel dashboard
+   - Configure DNS settings
+
+### Manual Deployment
 
 ```bash
-# Run E2E tests headlessly
-npm run test:e2e
+# Build for production
+npm run build
 
-# Open Cypress test runner
-npm run test:e2e:open
-
-# Run with browser visible
-npm run test:e2e:headed
+# Start production server
+npm start
 ```
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production  
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint issues
+npm run type-check   # TypeScript type checking
+npm run format       # Format code with Prettier
+```
+
+### Project Structure
+
+```
+src/
+├── app/                 # Next.js App Router
+│   ├── api/            # API routes
+│   │   └── contract-data/ # Main data endpoint
+│   ├── globals.css     # Global styles
+│   ├── layout.tsx      # Root layout
+│   └── page.tsx        # Homepage/Dashboard
+├── components/         # React components
+│   ├── providers/      # Context providers
+│   └── ui/            # UI components
+├── data/              # Static data and cache
+│   └── contract-cache.json # Pre-populated transactions
+├── lib/               # Utility libraries
+│   ├── cache-manager.ts # Smart caching system
+│   └── utils.ts       # Helper functions
+└── types/             # TypeScript definitions
+```
+
+## 🎯 Performance Optimizations
+
+### Caching Strategy
+- **Pre-populated Cache**: 24,955 transactions included in repository
+- **Incremental Updates**: Only fetch new transactions during updates  
+- **Smart Rotation**: Hourly data rotated to daily totals automatically
+- **Vercel Optimized**: 720 API calls/month (well under 1,000 limit)
+
+### Loading Performance
+- **Smart Polling**: Exponential backoff (10s → 30s intervals)
+- **Progress Indicators**: Visual feedback during initial cache loading
+- **Error Handling**: Graceful degradation for API failures
+- **UTC Consistency**: Eliminates timezone-related data inconsistencies
+
+## 📈 Analytics Features
+
+### Time-based Analysis
+- **UTC Standardization** - All timestamps converted to UTC for consistency
+- **Complete Days Only** - Averages calculated excluding incomplete days
+- **Smart Filtering** - Deployment day excluded from statistics
+- **Real-time Updates** - Live data refresh with visual indicators
+
+### Visual Components
+- **Transaction Timeline** - Hourly breakdown with smooth animations
+- **Trend Indicators** - Growth/decline arrows with percentages
+- **Status Indicators** - Online status with pulsing animation
+- **Responsive Charts** - Mobile-optimized visualizations
+
+## 🛡️ Best Practices
 
 ### Code Quality
-
-```bash
-# Lint code
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
-
-# Check formatting
-npm run format:check
-
-# Format code
-npm run format
-
-# Type check
-npm run type-check
-
-# Run all quality checks
-npm run test:all
-```
-
-## 📋 Testing Best Practices
-
-### Unit Testing Guidelines
-
-1. **Test Structure** - Follow AAA pattern (Arrange, Act, Assert)
-2. **Test Names** - Descriptive and behavior-focused
-3. **Mock External Dependencies** - Use MSW for API calls
-4. **Test User Interactions** - Use userEvent for realistic interactions
-5. **Accessibility Testing** - Include a11y checks in component tests
-
-### E2E Testing Guidelines
-
-1. **Page Object Models** - Encapsulate page interactions
-2. **Custom Commands** - Reusable test actions
-3. **Data Management** - Use fixtures and factories
-4. **Error Scenarios** - Test failure paths and recovery
-5. **Performance** - Include basic performance assertions
-
-### Example Test Files
-
-#### Component Test Example
-
-```typescript
-// src/components/__tests__/StatsCard.test.tsx
-import { render, screen } from '@/test/test-utils';
-import StatsCard from '../StatsCard';
-
-describe('StatsCard', () => {
-  it('renders with correct data', () => {
-    render(<StatsCard title="Users" value={1234} />);
-
-    expect(screen.getByText('Users')).toBeInTheDocument();
-    expect(screen.getByText('1,234')).toBeInTheDocument();
-  });
-});
-```
-
-#### Hook Test Example
-
-```typescript
-// src/hooks/__tests__/useApi.test.ts
-import { renderHook, waitFor } from '@testing-library/react';
-import { useApi } from '../useApi';
-
-describe('useApi', () => {
-  it('fetches data successfully', async () => {
-    const { result } = renderHook(() => useApi('/api/test'));
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.data).toBeDefined();
-  });
-});
-```
-
-#### E2E Test Example
-
-```typescript
-// cypress/e2e/dashboard.cy.ts
-describe('Dashboard', () => {
-  it('displays stats correctly', () => {
-    cy.visit('/dashboard');
-    cy.get('[data-testid="stats-card"]').should('have.length', 4);
-    cy.get('[data-testid="total-users"]').should('be.visible');
-  });
-});
-```
-
-## 🔧 Configuration Details
-
-### Jest Configuration
-
-- **Environment**: jsdom for DOM testing
-- **Setup Files**: Automatic imports and mocks
-- **Coverage**: 90% threshold on all metrics
-- **Transform**: SWC for fast compilation
-
-### Cypress Configuration
-
-- **Base URL**: http://localhost:3000
-- **Viewport**: 1280x720 default
-- **Retries**: 2 attempts in CI, 0 locally
-- **Video/Screenshots**: Enabled for debugging
-
-### ESLint Rules
-
-- **TypeScript**: Strict rules with no-implicit-any
-- **React**: Hooks rules and best practices
-- **Testing**: Specific rules for test files
-- **Accessibility**: jsx-a11y plugin enabled
-
-### Pre-commit Hooks
-
-- **Lint**: Auto-fix ESLint issues
-- **Format**: Auto-format with Prettier
-- **Type Check**: TypeScript validation
-- **Test**: Run affected tests (optional)
-
-## 🚀 CI/CD Pipeline
-
-The GitHub Actions workflow includes:
-
-1. **Quality Gates**
-   - ESLint checking
-   - Prettier validation
-   - TypeScript type checking
-
-2. **Unit Tests**
-   - Jest test execution
-   - Coverage reporting
-   - Coverage comments on PRs
-
-3. **Build Verification**
-   - Next.js production build
-   - Build artifact storage
-
-4. **E2E Tests**
-   - Multi-browser testing (Chrome, Firefox, Edge)
-   - Parallel execution
-   - Visual regression detection
-
-5. **Security Audit**
-   - npm audit for vulnerabilities
-   - Snyk security scanning
-
-6. **Performance Tests**
-   - Lighthouse CI scoring
-   - Performance budgets
-
-## 📈 Coverage Reports
-
-Coverage reports are generated in multiple formats:
-
-- **Console**: Summary in terminal
-- **HTML**: Detailed interactive report in `coverage/`
-- **LCOV**: For CI integration and badges
-- **JSON**: Machine-readable format
-
-Access HTML report:
-
-```bash
-npm run test:coverage
-open coverage/lcov-report/index.html
-```
-
-## 🎯 Quality Gates
-
-### Pre-commit Requirements
-
-- All files must pass ESLint with zero warnings
-- All files must be formatted with Prettier
-- TypeScript must compile without errors
-- Staged files must pass type checking
-
-### CI/CD Requirements
-
-- Unit test coverage must be ≥90%
-- All E2E tests must pass
-- Build must succeed without warnings
-- Security audit must pass with no high vulnerabilities
-
-### Commit Message Format
-
-Following Conventional Commits:
-
-```
-type(scope): subject
-
-body
-
-footer
-```
-
-Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, etc.
-
-## 🔍 Debugging Tests
-
-### Unit Tests
-
-```bash
-# Debug specific test
-npm test -- --testNamePattern="StatsCard"
-
-# Run tests in watch mode with coverage
-npm run test:watch -- --coverage
-
-# Debug with Node inspector
-node --inspect-brk node_modules/.bin/jest --runInBand
-```
-
-### E2E Tests
-
-```bash
-# Open Cypress in debug mode
-npm run test:e2e:open
-
-# Run specific test file
-npx cypress run --spec "cypress/e2e/dashboard.cy.ts"
-
-# Debug mode with browser visible
-npm run test:e2e:headed
-```
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Pre-commit hooks not running**
-
-   ```bash
-   npx husky install
-   chmod +x .husky/pre-commit
-   ```
-
-2. **Jest can't find modules**
-   - Check `moduleNameMapping` in package.json
-   - Verify TypeScript paths in tsconfig.json
-
-3. **Cypress tests failing locally**
-   - Ensure dev server is running on port 3000
-   - Check baseUrl in cypress.config.ts
-
-4. **Coverage threshold failures**
-   - Add tests for uncovered code
-   - Update exclusion patterns if needed
-
-5. **ESLint errors in tests**
-   - Check test-specific overrides in .eslintrc.json
-   - Use `eslint-disable` comments sparingly
-
-## 📚 Additional Resources
-
-- [Jest Documentation](https://jestjs.io/)
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-- [Cypress Documentation](https://docs.cypress.io/)
-- [ESLint Rules](https://eslint.org/docs/rules/)
-- [Prettier Configuration](https://prettier.io/docs/en/configuration.html)
+- TypeScript strict mode enabled
+- ESLint with Next.js recommended rules
+- Prettier for consistent formatting
+- Responsive design patterns
+
+### Performance
+- Image optimization with Next.js
+- Lazy loading for non-critical components  
+- Efficient re-renders with React best practices
+- Optimized bundle size
+
+### Security
+- API rate limiting considerations
+- Input validation and sanitization
+- Secure environment variable handling
+- HTTPS enforcement in production
 
 ## 🤝 Contributing
 
-1. Follow the established testing patterns
-2. Maintain 90%+ code coverage
-3. Write meaningful commit messages
-4. Ensure all quality gates pass
-5. Add tests for new features
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for
-details.
+This project is private and proprietary to LuckySea.
+
+## 🎲 About LuckySea
+
+LuckySea is a premium blockchain gaming platform featuring provably fair systems and real-time analytics. This dashboard showcases our signature design system and technical expertise in blockchain data visualization.
+
+---
+
+**Built with ❤️ by the LuckySea Team**
+
+🔗 [Live Dashboard](https://ls-lisktransactions.vercel.app/) • 🎲 [LuckySea Platform](https://luckysea.gg/) • 📊 [Analytics](https://ls-lisktransactions.vercel.app/)

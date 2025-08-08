@@ -367,7 +367,7 @@ export default function Dashboard() {
               </div>
               <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(255,255,255,0.2)' }}></div>
               <p style={{ color: '#E5E7EB', fontSize: '0.9rem', margin: 0 }}>
-                Auto-updated hourly
+                Pre-loaded historical data
               </p>
             </div>
             <div style={{ 
@@ -378,6 +378,9 @@ export default function Dashboard() {
             }}>
               <p style={{ color: '#02FFD2', fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
                 📊 Last updated: {contractData?.lastUpdate ? getTimeAgo(contractData.lastUpdate) : 'Loading...'}
+              </p>
+              <p style={{ color: 'rgba(2,255,210,0.7)', fontSize: '0.8rem', margin: '4px 0 0 0' }}>
+                Historical data • Daily snapshots at 00:00 UTC
               </p>
             </div>
           </div>
@@ -477,7 +480,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Today's Transactions */}
+          {/* Yesterday's Transactions (Last Complete Day) */}
           <div style={{ 
             background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
             padding: '25px', 
@@ -509,7 +512,7 @@ export default function Dashboard() {
               animation: 'shimmer 3s infinite 1s'
             }}></div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
-              📊 Today&apos;s Transactions
+              📊 Yesterday&apos;s Transactions
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
               {analysis?.todayTxs?.toLocaleString() || 0}
@@ -741,7 +744,7 @@ export default function Dashboard() {
             color: '#02FFD2', 
             textShadow: '0 0 20px rgba(2,255,210,0.3)',
             position: 'relative'
-          }}>📈 Transactions by Hour (Today UTC)</h2>
+          }}>📈 Transactions by Hour (Yesterday UTC)</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '10px' }}>
             {Array.from({ length: 24 }, (_, hour) => {
               const count = analysis?.hourlyData?.[hour] || 0;

@@ -450,15 +450,16 @@ export class CacheManager {
 
   private generateAnalysisFromOptimized(cache: OptimizedCache): any {
     const now = new Date();
-    // Use UTC for consistent timezone handling
-    const todayKeyUTC = now.toISOString().split('T')[0];
+    // Use yesterday's data for more accurate representation (since updates happen at 00:00 UTC)
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const yesterdayKeyUTC = yesterday.toISOString().split('T')[0];
     
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Calcular dados de hoje (UTC)
-    const todayTxs = (cache.recentHourly && cache.recentHourly[todayKeyUTC]) 
-      ? cache.recentHourly[todayKeyUTC].reduce((sum, count) => sum + count, 0) 
+    // Calcular dados de ontem (último dia completo)
+    const yesterdayTxs = (cache.recentHourly && cache.recentHourly[yesterdayKeyUTC]) 
+      ? cache.recentHourly[yesterdayKeyUTC].reduce((sum, count) => sum + count, 0) 
       : 0;
 
     // Calcular dados semanais
@@ -482,7 +483,7 @@ export class CacheManager {
     }
 
     // Calculate average per day using ONLY complete days (UTC-based)
-    // Reusar a variável todayKeyUTC já definida no início da função
+    const todayKeyUTC = now.toISOString().split('T')[0]; // Current day for exclusion from averages
     
     const completeDays: string[] = [];
     let completeDaysTransactions = 0;
@@ -531,12 +532,12 @@ export class CacheManager {
     console.log('Sample daily data:', cache.dailyTotals ? Object.entries(cache.dailyTotals).slice(0, 3) : 'none');
 
     return {
-      hourlyData: (cache.recentHourly && cache.recentHourly[todayKeyUTC]) 
-        ? Object.fromEntries(cache.recentHourly[todayKeyUTC].map((count, hour) => [hour, count]))
+      hourlyData: (cache.recentHourly && cache.recentHourly[yesterdayKeyUTC]) 
+        ? Object.fromEntries(cache.recentHourly[yesterdayKeyUTC].map((count, hour) => [hour, count]))
         : {},
       dailyData: cache.dailyTotals || {},
       monthlyData: cache.monthlyTotals || {},
-      todayTxs,
+      todayTxs: yesterdayTxs, // Renamed for backwards compatibility
       thisWeekTxs,
       thisMonthTxs,
       totalDaysActive: cache.totalDaysActive || 0,

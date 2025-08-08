@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuckySea - Provably Fair System</title>
+    <link rel="shortcut icon" href="https://luckysea.gg/favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #05202E 0%, #041924 50%, #05202E 100%);
+            background-attachment: fixed;
+            color: #E5E7EB;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 12px 0;
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .breadcrumb-link {
+            color: #02FFD2;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .breadcrumb-link:hover {
+            color: #FFFFFF;
+            text-decoration: underline;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: #9CA3AF;
+        }
+
+        .breadcrumb-current {
+            color: #E5E7EB;
+            font-weight: 500;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, #041924 0%, #052738 100%);
+            border: 1px solid #02FFD2;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(2, 255, 210, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #FFFFFF;
+            letter-spacing: -0.025em;
+        }
+
+        .header .subtitle {
+            font-size: 1.125rem;
+            color: #9CA3AF;
+            margin-bottom: 24px;
+        }
+
+        .blockchain-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #02FFD2;
+            color: #041924;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            gap: 8px;
+        }
+
+        .content-section {
+            background: #041924;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 32px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .content-section:hover {
+            border-color: rgba(2, 255, 210, 0.3);
+            box-shadow: 0 4px 20px rgba(2, 255, 210, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #02FFD2;
+        }
+
+        .section-subtitle {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #02FFD2;
+            margin-bottom: 16px;
+            margin-top: 32px;
+        }
+
+        .section-subtitle:first-of-type {
+            margin-top: 0;
+        }
+
+        .steps-list {
+            list-style: none;
+            counter-reset: step-counter;
+            margin: 24px 0;
+        }
+
+        .steps-list li {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .steps-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 28px;
+            height: 28px;
+            background: #02FFD2;
+            color: #041924;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .info-box {
+            background: #111827;
+            border: 1px solid #02FFD2;
+            border-radius: 6px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .info-box h4 {
+            color: #02FFD2;
+            font-size: 1.125rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .info-box p {
+            color: #D1D5DB;
+        }
+
+        .warning-box {
+            background: #451A03;
+            border: 1px solid #F59E0B;
+            border-radius: 6px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .warning-box h4 {
+            color: #F59E0B;
+            font-size: 1.125rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .warning-box p {
+            color: #FEF3C7;
+        }
+
+        .code-block {
+            background: #000000;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 0.875rem;
+            margin: 16px 0;
+            overflow-x: auto;
+            color: #E5E7EB;
+            position: relative;
+        }
+
+        .code-container {
+            position: relative;
+            margin: 16px 0;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #374151;
+            border: 1px solid #02FFD2;
+            color: #02FFD2;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .copy-button:hover {
+            background: #02FFD2;
+            color: #041924;
+        }
+
+        .copy-button.copied {
+            background: #10B981;
+            border-color: #10B981;
+            color: #FFFFFF;
+        }
+
+        .code-block code {
+            display: block;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        /* Syntax highlighting */
+        .code-block .comment {
+            color: #6B7280;
+            font-style: italic;
+        }
+
+        .code-block .keyword {
+            color: #F59E0B;
+            font-weight: 600;
+        }
+
+        .code-block .string {
+            color: #10B981;
+        }
+
+        .code-block .number {
+            color: #3B82F6;
+        }
+
+        .code-block .function {
+            color: #8B5CF6;
+        }
+
+        .code-block .operator {
+            color: #02FFD2;
+        }
+
+        .external-link {
+            color: #02FFD2;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .external-link:hover {
+            border-bottom-color: #02FFD2;
+        }
+
+        .technical-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin: 32px 0;
+        }
+
+        .tech-card {
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 24px;
+        }
+
+        .tech-card h3 {
+            color: #02FFD2;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .tech-card p {
+            color: #D1D5DB;
+            font-size: 0.9375rem;
+        }
+
+        .blockchain-icon {
+            width: 60px;
+            height: auto;
+            fill: #041924;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #374151;
+            border-radius: 6px;
+        }
+
+        strong {
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .header {
+                padding: 40px 24px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content-section {
+                padding: 24px;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .technical-details {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+        }
+
+        /* Modal System Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #041924;
+            border: 1px solid #02FFD2;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            color: #9CA3AF;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: #02FFD2;
+        }
+
+        .modal-title {
+            color: #02FFD2;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-right: 40px;
+        }
+
+        .modal-body {
+            color: #E5E7EB;
+            line-height: 1.6;
+        }
+
+        .modal-trigger {
+            color: #02FFD2;
+            text-decoration: none;
+            cursor: pointer;
+            border-bottom: 1px dotted #02FFD2;
+            transition: all 0.2s ease;
+        }
+
+        .modal-trigger:hover {
+            color: #FFFFFF;
+            border-bottom-color: #FFFFFF;
+        }
+
+        .help-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #02FFD2;
+            color: #041924;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .help-icon:hover {
+            background: #FFFFFF;
+            transform: scale(1.1);
+        }
+
+        /* Visual Enhancements and Animations */
+        .content-section {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .content-section:nth-child(even) {
+            animation-delay: 0.1s;
+        }
+
+        .content-section:nth-child(odd) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .blockchain-badge {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blockchain-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .blockchain-badge:hover::before {
+            left: 100%;
+        }
+
+        .blockchain-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(2, 255, 210, 0.3);
+        }
+
+        .tech-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tech-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #02FFD2, transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .tech-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+            border-color: #02FFD2;
+            box-shadow: 0 8px 25px rgba(2, 255, 210, 0.2);
+        }
+
+        .steps-list li {
+            transition: all 0.3s ease;
+        }
+
+        .steps-list li:hover {
+            transform: translateX(5px);
+            color: #FFFFFF;
+        }
+
+        .steps-list li::before {
+            transition: all 0.3s ease;
+        }
+
+        .steps-list li:hover::before {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(2, 255, 210, 0.5);
+        }
+
+        .external-link {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .external-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background-color: #02FFD2;
+            transition: width 0.3s ease;
+        }
+
+        .external-link:hover::after {
+            width: 100%;
+        }
+
+        .info-box, .warning-box {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .info-box:hover {
+            transform: translateX(5px);
+            box-shadow: -4px 0 0 #02FFD2;
+        }
+
+        .warning-box:hover {
+            transform: translateX(5px);
+            box-shadow: -4px 0 0 #F59E0B;
+        }
+
+        /* Pulse animation for important elements */
+        .section-title {
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #02FFD2, transparent);
+            animation: expandLine 1s ease-out 0.5s forwards;
+        }
+
+        @keyframes expandLine {
+            to {
+                width: 100%;
+            }
+        }
+
+        /* Smooth scrolling enhancement */
+        html {
+            scroll-behavior: smooth;
+        }
+
+
+        /* Collapsible Sections */
+        .collapsible {
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible:hover {
+            border-color: #02FFD2;
+        }
+
+        .collapsible-header {
+            background: linear-gradient(135deg, #041924 0%, #052738 100%);
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, #052738 0%, #041924 100%);
+        }
+
+        .collapsible-title {
+            color: #02FFD2;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .collapsible-icon {
+            color: #02FFD2;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .collapsible.active .collapsible-content {
+            max-height: 2000px;
+        }
+
+        .collapsible-body {
+            padding: 20px;
+            color: #E5E7EB;
+        }
+
+        .collapsible-body h4 {
+            color: #02FFD2;
+            margin: 16px 0 8px 0;
+        }
+
+        .collapsible-body ul, .collapsible-body ol {
+            margin-left: 20px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumb">
+            <a href="/" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-separator">→</span>
+            <span class="breadcrumb-current">Provably Fair System</span>
+        </nav>
+
+        <div class="header">
+            <h1>Provably Fair System</h1>
+            <p class="subtitle">Blockchain-Based Verification and Transparency</p>
+            <div class="blockchain-badge">
+                <span>Powered by</span>
+                <a href="https://lisk.com/" target="_blank" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
+                    <svg class="blockchain-icon" viewBox="0 0 114 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M71.1139 18.063H64.4346V39.6471H71.1139V18.063Z" fill="currentColor"></path>
+                        <path d="M87.6884 27.794C86.7201 27.3527 85.5011 26.9209 84.0344 26.5083C83.2598 26.2606 82.609 26.0384 82.082 25.8448C81.555 25.6511 81.1392 25.4225 80.8376 25.159C80.5328 24.8956 80.3804 24.5717 80.3804 24.1844C80.3804 23.8257 80.5455 23.5051 80.8788 23.2289C81.2122 22.9527 81.682 22.813 82.2915 22.813C82.955 22.813 83.4757 23.0194 83.8471 23.4352C84.1296 23.7495 84.3391 24.1305 84.4693 24.5717H91.0344C90.8852 23.2606 90.4534 22.0924 89.7423 21.067C89.009 20.0162 87.9995 19.1908 86.7106 18.5971C85.4249 18.0035 83.9233 17.7051 82.2058 17.7051C80.3804 17.7051 78.8217 17.9749 77.536 18.5146C76.2503 19.0543 75.2788 19.8098 74.628 20.7781C73.9772 21.7463 73.6534 22.8416 73.6534 24.0575C73.6534 25.3876 73.9931 26.4797 74.6693 27.3368C75.3487 28.194 76.1645 28.8606 77.1201 29.3305C78.0757 29.8003 79.2725 30.2702 80.7106 30.7432C81.5138 31.0194 82.1836 31.2702 82.7233 31.4892C83.263 31.7114 83.6915 31.9749 84.009 32.2797C84.3265 32.5844 84.4852 32.9305 84.4852 33.3178C84.4852 33.7336 84.3042 34.086 83.9455 34.3749C83.5868 34.667 83.0471 34.8098 82.3264 34.8098C81.6058 34.8098 80.9614 34.5971 80.4788 34.1654C80.1423 33.867 79.8979 33.4924 79.7423 33.0384H73.1836C73.3296 34.3241 73.7455 35.4765 74.4376 36.4892C75.1836 37.5844 76.228 38.4416 77.5709 39.0638C78.9138 39.686 80.4979 39.9971 82.3233 39.9971C84.2598 39.9971 85.9011 39.7051 87.2439 39.1241C88.5868 38.5432 89.5899 37.7463 90.2534 36.7368C90.9169 35.7273 91.2503 34.5432 91.2503 33.1876C91.2503 31.8321 90.8979 30.6352 90.1931 29.7622C89.4884 28.8892 88.6503 28.2321 87.682 27.7908L87.6884 27.794Z" fill="currentColor"></path>
+                        <path d="M51.7809 10.9048L45.1016 18.0635V39.6445H62.4V33.0349H51.7809V10.9048Z" fill="currentColor"></path>
+                        <path d="M106.317 28.7715L113.314 18.0635L105.847 18.0603L100.003 27.0381V10.9048L93.3203 18.0635V39.6445H100.003V30.4857L106.393 39.6445H113.866L106.317 28.7715Z" fill="currentColor"></path>
+                        <g>
+                            <path d="M17.543 0.000976562L13.5557 6.55653L26.6033 27.9248L15.6795 39.6454H24.9239L35.0922 28.7534L17.543 0.000976562Z" fill="currentColor"></path>
+                            <path d="M13.2581 33.0349L8.49939 27.9237L16.5089 14.7968L12.5121 8.25391L0.000976562 28.7523L10.1692 39.6444H13.5407L19.7216 33.0349H13.2581Z" fill="currentColor"></path>
+                        </g>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="section-title">Overview</div>
+            <p>The concept of provable fairness allows players to prove and verify that their results are fair and unmanipulated. This is achieved through the use of a <span class="modal-trigger" onclick="openModal('commitmentModal')">commitment scheme</span><span class="help-icon" onclick="openModal('commitmentModal')">?</span> combined with <span class="modal-trigger" onclick="openModal('hashingModal')">cryptographic hashing</span><span class="help-icon" onclick="openModal('hashingModal')">?</span>, now enhanced with blockchain technology on <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a>.</p>
+            
+            <p>The commitment scheme ensures that players have influence on all results generated. Cryptographic hashing ensures that the platform remains honest to this commitment scheme. With our blockchain integration, all processes are now permanently recorded and independently verifiable.</p>
+
+            <p>The result of each game is determined by a cryptographic function that combines three key elements: a secret <span class="modal-trigger" onclick="openModal('serverSeedModal')">Server Seed</span><span class="help-icon" onclick="openModal('serverSeedModal')">?</span>, your public <span class="modal-trigger" onclick="openModal('clientSeedModal')">Client Seed</span><span class="help-icon" onclick="openModal('clientSeedModal')">?</span>, and a unique <span class="modal-trigger" onclick="openModal('nonceModal')">Nonce</span><span class="help-icon" onclick="openModal('nonceModal')">?</span> for each round. This process ensures that the outcome is both randomly generated and verifiable. The exact logic is openly displayed in our <strong>Implementation</strong> section below.</p>
+            
+            <div class="info-box">
+                <h4>Blockchain Enhancement</h4>
+                <p>All provably fair results are generated through mathematical calculations where only the Nonce changes with each box opening. Blockchain registration ensures data immutability - when you change your client seed, the server seed is revealed and can be verified through its registered hash, proving that result manipulation is impossible.</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="section-title">Implementation</div>
+            <p>Our system's logic is transparent and verifiable. Below is the core source code that governs how results are generated using blockchain-enhanced provably fair algorithms.</p>
+
+            <div class="section-subtitle">Generating a Fair Number (getRaffleNumber)</div>
+            <p>This function takes the server seed, client seed, and nonce to produce a secure number within a specified range, with all parameters now verified on <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a>. <span class="modal-trigger" onclick="openModal('algorithmModal')">Learn more about the algorithm</span><span class="help-icon" onclick="openModal('algorithmModal')">?</span></p>
+
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre class="code-block"><code><span class="keyword">const</span> <span class="function">getRaffleNumber</span> = (<span class="string">privateSeed</span>, <span class="string">publicSeed</span>, <span class="string">nonce</span>, <span class="string">minNumber</span>, <span class="string">maxNumber</span>) <span class="operator">=></span> {
+    <span class="comment">// 1. Calculate the range of possible numbers</span>
+    <span class="keyword">const</span> <span class="string">range</span> = <span class="function">Math.floor</span>(<span class="function">Math.abs</span>(<span class="string">maxNumber</span> <span class="operator">-</span> <span class="string">minNumber</span> <span class="operator">+</span> <span class="number">1</span>))
+
+    <span class="comment">// 2. Concatenate the three main components: server seed, client seed, and nonce</span>
+    <span class="keyword">const</span> <span class="string">concatenatedSeeds</span> = <span class="string">`${privateSeed}${publicSeed}${nonce}`</span>
+
+    <span class="comment">// 3. Generate a SHA256 hash from the concatenated string</span>
+    <span class="keyword">const</span> <span class="string">hashNumber</span> = <span class="function">getHash256</span>(<span class="string">concatenatedSeeds</span>)
+
+    <span class="comment">// 4. Convert the hash (hexadecimal) to BigInt, apply modulo operator (%) with the 'range'</span>
+    <span class="comment">//    to ensure the result is within the desired interval</span>
+    <span class="keyword">const</span> <span class="string">raffled</span> = <span class="function">BigInt</span>(<span class="string">`0x${hashNumber}`</span>) <span class="operator">%</span> <span class="function">BigInt</span>(<span class="string">range</span>)
+
+    <span class="comment">// 5. Add the raffled number to the minimum value to adjust to the correct interval</span>
+    <span class="keyword">return</span> <span class="function">Number</span>(<span class="string">minNumber</span>) <span class="operator">+</span> <span class="function">Number</span>(<span class="string">raffled</span>.<span class="function">toString</span>())
+}</code></pre>
+            </div>
+
+            <div class="section-subtitle">Choosing an Item Based on Odds (getRaffleChances)</div>
+            <p>This function uses the fair number generated above to select an item from a lootbox, accurately weighting each item based on its specified chance. The entire process is recorded on the blockchain for verification.</p>
+
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre class="code-block"><code><span class="keyword">const</span> <span class="function">getRaffleChances</span> = (<span class="string">privateSeed</span>, <span class="string">publicSeed</span>, <span class="string">nonce</span>, <span class="string">chanceArray</span>) <span class="operator">=></span> {
+    <span class="comment">// 1. Define precision. 1e6 (1,000,000) means chances are handled with 6 decimal places</span>
+    <span class="keyword">const</span> <span class="string">precision</span> = <span class="number">1e6</span>
+
+    <span class="comment">// 2. Calculate the total sum of all chances, multiplied by precision</span>
+    <span class="comment">//    Example: If sum of chances is 100%, summedChance will be 100 * 1,000,000 = 100,000,000</span>
+    <span class="keyword">const</span> <span class="string">summedChance</span> = <span class="string">chanceArray</span>.<span class="function">reduce</span>((<span class="string">sum</span>, <span class="string">value</span>) <span class="operator">=></span> 
+        <span class="string">sum</span> <span class="operator">+</span> (<span class="string">value</span>.<span class="string">chance</span> <span class="operator">??</span> <span class="string">value</span>) <span class="operator">*</span> <span class="string">precision</span>, <span class="number">-1</span>)
+
+    <span class="comment">// 3. Use getRaffleNumber to draw a winning "ticket" between 0 and total sum of chances</span>
+    <span class="keyword">const</span> <span class="string">chosenValue</span> = <span class="function">getRaffleNumber</span>(<span class="string">privateSeed</span>, <span class="string">publicSeed</span>, <span class="string">nonce</span>, <span class="number">0</span>, <span class="function">Math.floor</span>(<span class="string">summedChance</span>))
+
+    <span class="keyword">let</span> <span class="string">summedPossibilities</span> = <span class="number">0</span>
+    <span class="comment">// 4. Iterate through the item list. For each item, add its chance (multiplied by precision)</span>
+    <span class="comment">//    to the accumulated possibilities</span>
+    <span class="keyword">for</span> (<span class="keyword">let</span> <span class="string">i</span> = <span class="number">0</span>; <span class="string">i</span> <span class="operator"><</span> <span class="string">chanceArray</span>.<span class="string">length</span>; <span class="string">i</span><span class="operator">++</span>) {
+        <span class="string">summedPossibilities</span> <span class="operator">+=</span> (<span class="string">chanceArray</span>[<span class="string">i</span>].<span class="string">chance</span> <span class="operator">??</span> <span class="string">chanceArray</span>[<span class="string">i</span>]) <span class="operator">*</span> <span class="string">precision</span>
+
+        <span class="comment">// 5. If the drawn "ticket" (chosenValue) is less than the accumulated value,</span>
+        <span class="comment">//    the current item is the winner</span>
+        <span class="keyword">if</span> (<span class="string">chosenValue</span> <span class="operator"><</span> <span class="string">summedPossibilities</span>) <span class="keyword">return</span> <span class="string">chanceArray</span>[<span class="string">i</span>]
+    }
+}</code></pre>
+            </div>
+
+            <div class="info-box">
+                <h4>Blockchain Enhancement</h4>
+                <p>These algorithms remain unchanged from our traditional system, but now every execution is recorded on <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a>. The server seeds, client seeds (generated via Gelato VRF), nonces, and final results are all permanently stored on the blockchain, making the entire process transparent and immutable.</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="section-title">Client Seed Verification</div>
+            <p>With our new blockchain-based system, verify that your client seed was genuinely generated using Gelato's Verifiable Random Function (VRF) on the <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a> blockchain:</p>
+            
+            <div class="collapsible active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h3 class="collapsible-title">Blockchain VRF Verification Steps</h3>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="collapsible-body">
+                        <ol class="steps-list">
+                            <li>Navigate to any lootbox interface and select <strong>Fairness</strong></li>
+                            <li>Click the link <strong>"Check your fairness on Lisk Layer 2"</strong></li>
+                            <li>You will be redirected to the Lisk Explorer displaying the transaction ID from your current client seed generation</li>
+                            <li>Copy your client seed from the Fairness popup and convert it from base36 to base10 format
+                                <div class="code-block">
+                                    Converter tool: <a href="https://math.tools/calculator/base/36-10" class="external-link" target="_blank">https://math.tools/calculator/base/36-10</a>
+                                </div>
+                            </li>
+                            <li>Locate your converted base10 number within the transaction logs</li>
+                            <li>Verify that your number appears in the <strong>randomWords</strong> array generated by <a href="https://www.gelato.cloud/vrf" class="external-link" target="_blank">Gelato VRF</a>, the official VRF provider for <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h3 class="collapsible-title">Traditional Client Seed Properties</h3>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="collapsible-body">
+                        <h4>Player Control in Randomness</h4>
+                        <p>The player's client seed is an essential component of the algorithm to ensure that they also have a part in the randomness of the generated outcomes. If only the server seed were used, the server would have complete control over each bet's outcome.</p>
+
+                        <h4>Seed Rotation Benefits</h4>
+                        <p>Players can change their client seed regularly to establish a new series of upcoming random results. This guarantees that the player has complete authority over the result's generation, similar to cutting the deck in a physical casino.</p>
+
+                        <h4>How to Change Your Seed</h4>
+                        <p>You can accomplish this by using the fairness modal inside a Chest page. Regular seed changes also reveal previous server seeds for verification purposes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="section-title">Server Seed</div>
+            <p>Our system generates a random 64-character hexadecimal string called the server seed. Before opening any Chest, you receive a <strong>hashed version</strong> of this generated server seed, now registered on the blockchain. We provide the hashed version to ensure that the platform operator cannot alter the un-hashed server seed, and players cannot predict the outcomes in advance.</p>
+
+            <p>To reveal the server seed from its hashed version, players need to rotate it, which initiates the replacement with a newly generated seed.</p>
+
+            <p>Once this is done, you can verify whether the hashed server seed matches the un-hashed server seed using both traditional methods and blockchain verification.</p>
+        </div>
+
+        <div class="content-section">
+            <div class="section-title">Nonce</div>
+            <p>The nonce is a number that increases with each new Chest opened and is reset to zero every time a new Client Seed is generated.</p>
+
+            <p>Utilizing the SHA256 cryptographic function, this ensures the creation of a completely unique result every time, eliminating the need to generate new client seeds and server seeds.</p>
+
+            <p>The inclusion of a nonce guarantees the continuity of your client seed and server seed pair while generating fresh outcomes for each bet made. Each opening is now recorded on the blockchain with its corresponding nonce value.</p>
+        </div>
+
+
+        <div class="content-section">
+            <div class="section-title">Verification Process</div>
+            <p>The provably fair verification process remains the same, but now with full blockchain transparency. Every step is recorded on <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a>, allowing you to independently verify all data on the blockchain.</p>
+
+            <div class="section-subtitle">Step 1: Access Your History</div>
+            <p>Navigate to your <strong>History</strong> section and select the chest opening you want to verify, then click on <strong>Fairness</strong>.</p>
+
+            <div class="image-container">
+                <img alt="History Interface" src="/footer/history.png" style="max-width: 100%; height: auto;">
+            </div>
+
+            <div class="info-box">
+                <h4>🔗 New: Blockchain Verification Links</h4>
+                <p>In your History, you'll now see <strong>"Registered on Lisk Layer 2"</strong> links for each box opening. Click these links to be redirected to the Lisk Explorer where you can verify that your opening and result were permanently recorded on the blockchain.</p>
+            </div>
+
+            <div class="section-subtitle">Step 2: Change Your Client Seed (Required for Server Seed Access)</div>
+            <div class="warning-box">
+                <h4>⚠️ Critical Step</h4>
+                <p><strong>You must change your client seed first</strong> to gain access to your Server Seed for verification. Without this step, the Server Seed remains hidden for security.</p>
+            </div>
+
+            <ol class="steps-list">
+                <li>Access any lootbox and open the <strong>Fairness</strong> modal</li>
+                <li>Click the <strong>"Change Client Seed"</strong> button</li>
+                <li>Once changed, you will gain access to your previous Server Seed in History and on the blockchain</li>
+            </ol>
+
+            <div class="image-container">
+                <img alt="Fairness Modal" src="/footer/fairness.png" style="width: 280px; max-width: 100%; height: auto;">
+            </div>
+
+            <div class="image-container">
+                <img alt="Seeds Interface" src="/footer/seeds.png" style="width: 280px; max-width: 100%; height: auto;">
+            </div>
+
+            <div class="section-subtitle">Step 3: Using the Verify Tab</div>
+            <p>After changing your client seed and accessing your Server Seed data:</p>
+            
+            <ol class="steps-list">
+                <li>Navigate to the <strong>Verify</strong> tab in the Fairness modal</li>
+                <li>Enter your Server Seed, Client Seed, and Nonce from the specific box opening</li>
+                <li>The system will calculate what the result should have been</li>
+                <li>Compare this calculated result with your actual box opening result</li>
+                <li>You can change the Nonce to verify other potential results with the same seed pair</li>
+            </ol>
+
+            <div class="image-container">
+                <img alt="Verify Interface" src="/footer/verify.png" style="width: 280px; max-width: 100%; height: auto;">
+            </div>
+
+            <div class="info-box">
+                <h4>🔗 Enhanced: Cross-Reference with Blockchain</h4>
+                <p>You can now cross-reference your verification results with the blockchain records by clicking the <strong>"Check your fairness on Lisk Layer 2"</strong> link in the Fairness modal. This will show you the immutable blockchain record of your client seed generation and all related data.</p>
+            </div>
+
+            <div class="info-box">
+                <h4>Why Server Seed Access Requires Client Seed Change</h4>
+                <p>This security measure ensures that players cannot predict future outcomes. The server seed remains hidden until you commit to a new client seed, at which point the previous server seed becomes safe to reveal for verification purposes.</p>
+            </div>
+
+            <div class="warning-box">
+                <h4>Important: Understanding the Verification Workflow</h4>
+                <p>To verify past winnings or check potential future results, you must first change your client seed. This reveals your previous server seed and allows complete verification of all previous box openings with that seed pair.</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="section-title">System Benefits</div>
+            <p>Our blockchain-integrated provably fair system delivers unprecedented transparency in online gaming through:</p>
+            
+            <div class="technical-details">
+                <div class="tech-card">
+                    <h3>Immutable Records</h3>
+                    <p>All seeds, results, and calculations are permanently stored on <a href="https://lisk.com/" class="external-link" target="_blank">Lisk Layer 2</a>, making historical manipulation impossible.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3>Independent Verification</h3>
+                    <p>Players can independently verify all aspects of the system using publicly available blockchain data, third-party tools, and traditional verification methods.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3>Cryptographic Security</h3>
+                    <p>Utilizes industry-standard SHA256 cryptographic functions and verifiable random functions for maximum security and fairness.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3>Mathematical Transparency</h3>
+                    <p>The chest selection algorithm based on probability calculations and remainder division is fully transparent and verifiable.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3>Player Control</h3>
+                    <p>Players maintain influence over results through client seed management while benefiting from blockchain immutability.</p>
+                </div>
+
+                <div class="tech-card">
+                    <h3>Commitment Scheme</h3>
+                    <p>Traditional cryptographic commitment ensures platform honesty while blockchain technology adds permanent verification.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal System -->
+    <div id="commitmentModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Commitment Scheme</h2>
+            <div class="modal-body">
+                <p>A commitment scheme is a cryptographic protocol that allows one party to commit to a chosen value while keeping it hidden from others, with the ability to reveal the committed value later.</p>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">How it works in provably fair gaming:</h3>
+                <ol style="margin-left: 20px;">
+                    <li><strong>Commit Phase:</strong> The server generates a secret seed and shares only its hash (commitment) with players</li>
+                    <li><strong>Reveal Phase:</strong> After the game, the server reveals the original seed, which players can verify against the hash</li>
+                    <li><strong>Verification:</strong> Players confirm the revealed seed produces the same hash, proving no manipulation occurred</li>
+                </ol>
+                
+                <p style="margin-top: 16px;">This ensures the server cannot change the outcome after seeing the player's input, while players cannot predict the outcome in advance.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="hashingModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Cryptographic Hashing</h2>
+            <div class="modal-body">
+                <p>Cryptographic hashing is a mathematical function that converts input data of any size into a fixed-size string of characters (hash).</p>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Key Properties:</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Deterministic:</strong> Same input always produces the same hash</li>
+                    <li><strong>Irreversible:</strong> Cannot determine the original input from the hash</li>
+                    <li><strong>Avalanche Effect:</strong> Small input changes drastically alter the output</li>
+                    <li><strong>Collision Resistant:</strong> Nearly impossible to find two inputs with the same hash</li>
+                </ul>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">SHA256 Example:</h3>
+                <div style="background: #000; padding: 12px; border-radius: 6px; font-family: monospace; margin: 8px 0;">
+                    Input: "hello"<br>
+                    Hash: 2cf24dba4f21d4288094c7b392f...<br><br>
+                    Input: "hello1"<br>
+                    Hash: e4db8a7b39f8ad2c14ffe89c1b5c...
+                </div>
+                
+                <p>We use SHA256 to ensure game outcomes are deterministic yet unpredictable until seeds are revealed.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="serverSeedModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Server Seed</h2>
+            <div class="modal-body">
+                <p>The server seed is a secret random value generated by the platform that serves as one input to the provably fair calculation.</p>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Characteristics:</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Secret:</strong> Hidden from players until revealed</li>
+                    <li><strong>Random:</strong> Generated using cryptographically secure methods</li>
+                    <li><strong>Fixed Length:</strong> Typically 64 hexadecimal characters</li>
+                    <li><strong>Blockchain Registered:</strong> Hash recorded on Lisk Layer 2</li>
+                </ul>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Security Process:</h3>
+                <ol style="margin-left: 20px;">
+                    <li>Server generates random seed</li>
+                    <li>Hash is published and registered on blockchain</li>
+                    <li>Games are played using the hidden seed</li>
+                    <li>Seed is revealed when player changes client seed</li>
+                    <li>Players verify the revealed seed matches the published hash</li>
+                </ol>
+                
+                <p style="margin-top: 16px;">Example: <code style="background: #000; padding: 2px 4px; border-radius: 3px;">a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456</code></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="clientSeedModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Client Seed</h2>
+            <div class="modal-body">
+                <p>The client seed is a value chosen by or generated for the player that influences the game outcome, ensuring players have control in the randomness process.</p>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Generation Methods:</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Blockchain VRF:</strong> Generated using Gelato's Verifiable Random Function on Lisk Layer 2</li>
+                    <li><strong>Player Choice:</strong> Custom string chosen by the player</li>
+                    <li><strong>Browser Generated:</strong> Created using secure random functions</li>
+                </ul>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Player Benefits:</h3>
+                <ol style="margin-left: 20px;">
+                    <li><strong>Influence:</strong> Directly affects all game outcomes</li>
+                    <li><strong>Control:</strong> Can be changed at any time</li>
+                    <li><strong>Transparency:</strong> Always visible to the player</li>
+                    <li><strong>Verifiable:</strong> VRF generation is provable on blockchain</li>
+                </ol>
+                
+                <div style="background: #111827; border: 1px solid #02FFD2; padding: 12px; border-radius: 6px; margin: 16px 0;">
+                    <strong>Pro Tip:</strong> Change your client seed periodically to ensure fresh randomness and to reveal previous server seeds for verification.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="nonceModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Nonce</h2>
+            <div class="modal-body">
+                <p>A nonce (number used once) is an incrementing counter that ensures each game round produces a unique result, even with the same server and client seeds.</p>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">How it works:</h3>
+                <ol style="margin-left: 20px;">
+                    <li><strong>Starts at 0:</strong> When new seeds are generated</li>
+                    <li><strong>Increments by 1:</strong> For each game played</li>
+                    <li><strong>Resets to 0:</strong> When client seed changes</li>
+                    <li><strong>Recorded on blockchain:</strong> Each nonce value is permanently stored</li>
+                </ol>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Example Sequence:</h3>
+                <div style="background: #000; padding: 12px; border-radius: 6px; font-family: monospace; margin: 8px 0;">
+                    Game 1: ServerSeed + ClientSeed + 0 = Result A<br>
+                    Game 2: ServerSeed + ClientSeed + 1 = Result B<br>
+                    Game 3: ServerSeed + ClientSeed + 2 = Result C<br>
+                    ...and so on
+                </div>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Benefits:</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Uniqueness:</strong> Guarantees different outcomes for each game</li>
+                    <li><strong>Efficiency:</strong> No need to generate new seeds every round</li>
+                    <li><strong>Predictability:</strong> Players can calculate future outcomes</li>
+                    <li><strong>Verification:</strong> Easy to verify any historical game</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="algorithmModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Algorithm Deep Dive</h2>
+            <div class="modal-body">
+                <p>Our provably fair algorithm converts cryptographic hashes into fair, verifiable random numbers within specified ranges.</p>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Step-by-Step Process:</h3>
+                <ol style="margin-left: 20px;">
+                    <li><strong>Concatenation:</strong> Combine ServerSeed + ClientSeed + Nonce into a single string</li>
+                    <li><strong>Hashing:</strong> Apply SHA256 to create a 256-bit (64 character) hexadecimal hash</li>
+                    <li><strong>Conversion:</strong> Convert hex to BigInt for mathematical operations</li>
+                    <li><strong>Modulo Operation:</strong> Use remainder division to fit within desired range</li>
+                    <li><strong>Adjustment:</strong> Add minimum value to shift to correct range</li>
+                </ol>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Mathematical Formula:</h3>
+                <div style="background: #000; padding: 12px; border-radius: 6px; font-family: monospace; margin: 8px 0;">
+                    hash = SHA256(serverSeed + clientSeed + nonce)<br>
+                    bigIntHash = BigInt("0x" + hash)<br>
+                    range = maxNumber - minNumber + 1<br>
+                    result = minNumber + (bigIntHash % range)
+                </div>
+                
+                <h3 style="color: #02FFD2; margin: 16px 0 8px 0;">Why This Method is Fair:</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Deterministic:</strong> Same inputs always produce same output</li>
+                    <li><strong>Uniform Distribution:</strong> All numbers in range have equal probability</li>
+                    <li><strong>Unpredictable:</strong> Cannot be manipulated without changing seeds</li>
+                    <li><strong>Verifiable:</strong> Players can run the same calculation</li>
+                </ul>
+                
+                <div style="background: #111827; border: 1px solid #F59E0B; padding: 12px; border-radius: 6px; margin: 16px 0;">
+                    <strong>Note:</strong> For very large ranges, there may be minimal bias due to modulo operation. This bias is negligible in practical gaming scenarios.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal system functionality
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling.querySelector('code');
+            const text = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(function() {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(function() {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Collapsible functionality
+        function toggleCollapsible(header) {
+            const collapsible = header.parentElement;
+            collapsible.classList.toggle('active');
+        }
+
+    </script>
+</body>
+</html>

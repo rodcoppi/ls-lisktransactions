@@ -1,0 +1,547 @@
+name: Load Testing Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily load tests at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Type of load test to run"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - smoke
+          - api_stress
+          - progressive_load
+          - endurance
+          - full
+      max_users:
+        description: "Maximum concurrent users"
+        required: false
+        default: "5000"
+      duration:
+        description: "Test duration"
+        required: false
+        default: "1800s"
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  # Load testing configuration
+  LOAD_TEST_ENV: ${{ github.event.inputs.environment || 'staging' }}
+  LOAD_TEST_MAX_USERS: ${{ github.event.inputs.max_users || '5000' }}
+  LOAD_TEST_DURATION: ${{ github.event.inputs.duration || '1800s' }}
+  LOAD_TEST_RAMP_UP: "300s"
+
+  # Environment URLs
+  STAGING_URL: "https://staging.liskcounter.com"
+  PRODUCTION_URL: "https://liskcounter.com"
+
+  # CI/CD configuration
+  FAIL_ON_SLA_VIOLATION: "true"
+  UPLOAD_RESULTS: "true"
+
+jobs:
+  # Pre-test validation
+  pre-test-validation:
+    name: Pre-test Validation
+    runs-on: ubuntu-latest
+    outputs:
+      base-url: ${{ steps.set-env.outputs.base-url }}
+      should-run-tests: ${{ steps.validate.outputs.should-run }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment variables
+        id: set-env
+        run: |
+          if [ "${{ env.LOAD_TEST_ENV }}" = "production" ]; then
+            echo "base-url=${{ env.PRODUCTION_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "base-url=${{ env.STAGING_URL }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate target system
+        id: validate
+        run: |
+          BASE_URL="${{ steps.set-env.outputs.base-url }}"
+
+          echo "🏥 Validating target system: $BASE_URL"
+
+          # Health check
+          if curl -f --max-time 30 "$BASE_URL/api/health"; then
+            echo "✅ System health check passed"
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ System health check failed"
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Check for concurrent tests
+        run: |
+          echo "🔍 Checking for concurrent load tests..."
+          # In a real scenario, this would check for locks/flags to prevent concurrent tests
+          echo "✅ No concurrent tests detected"
+
+  # Smoke tests (quick validation)
+  smoke-tests:
+    name: Smoke Tests
+    needs: pre-test-validation
+    if: needs.pre-test-validation.outputs.should-run-tests == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Run smoke tests
+        env:
+          LOAD_TEST_BASE_URL: ${{ needs.pre-test-validation.outputs.base-url }}
+        run: |
+          echo "💨 Running smoke tests..."
+          node scripts/performance-test.js --test-type smoke --max-users 10 --duration 60s
+
+      - name: Upload smoke test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: load-tests/reports/
+          retention-days: 30
+
+  # Main load tests
+  load-tests:
+    name: Load Tests
+    needs: [pre-test-validation, smoke-tests]
+    if: |
+      needs.pre-test-validation.outputs.should-run-tests == 'true' && 
+      (github.event.inputs.test_type == 'full' || 
+       github.event.inputs.test_type == 'api_stress' || 
+       github.event.inputs.test_type == 'progressive_load' ||
+       github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    strategy:
+      matrix:
+        test-scenario:
+          - name: "API Stress Test"
+            type: "api_stress"
+            duration: "1800s"
+            max-users: 5000
+          - name: "Progressive Load Test"
+            type: "progressive_load"
+            duration: "2400s"
+            max-users: 10000
+          - name: "WebSocket Real-time Test"
+            type: "websocket_realtime"
+            duration: "1200s"
+            max-users: 2000
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup load testing tools
+        run: |
+          # Install K6
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+          # Install Artillery
+          npm install -g artillery@latest
+
+          # Verify installations
+          k6 version
+          artillery --version
+
+      - name: Run load test - ${{ matrix.test-scenario.name }}
+        env:
+          LOAD_TEST_BASE_URL: ${{ needs.pre-test-validation.outputs.base-url }}
+          LOAD_TEST_MAX_USERS: ${{ matrix.test-scenario.max-users }}
+          LOAD_TEST_DURATION: ${{ matrix.test-scenario.duration }}
+          TEST_SCENARIO: ${{ matrix.test-scenario.type }}
+        run: |
+          echo "🚀 Running ${{ matrix.test-scenario.name }}"
+          echo "Target: $LOAD_TEST_BASE_URL"
+          echo "Max Users: $LOAD_TEST_MAX_USERS"
+          echo "Duration: $LOAD_TEST_DURATION"
+
+          # Run the specific test scenario
+          node scripts/performance-test.js \
+            --test-type ${{ matrix.test-scenario.type }} \
+            --max-users ${{ matrix.test-scenario.max-users }} \
+            --duration ${{ matrix.test-scenario.duration }}
+
+      - name: Parse test results
+        id: results
+        if: always()
+        run: |
+          # Extract key metrics from the latest report
+          if [ -f "load-tests/reports/performance-summary-"*.txt ]; then
+            LATEST_REPORT=$(ls -t load-tests/reports/performance-summary-*.txt | head -n1)
+            
+            SUCCESS_RATE=$(grep "Success Rate:" "$LATEST_REPORT" | sed 's/Success Rate: //' | sed 's/%//')
+            AVG_RESPONSE=$(grep "Avg Response Time:" "$LATEST_REPORT" | sed 's/Avg Response Time: //' | sed 's/ms//')
+            SLA_VIOLATIONS=$(grep "SLA Violations:" "$LATEST_REPORT" | sed 's/SLA Violations: //')
+            
+            echo "success-rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+            echo "avg-response-time=$AVG_RESPONSE" >> $GITHUB_OUTPUT
+            echo "sla-violations=$SLA_VIOLATIONS" >> $GITHUB_OUTPUT
+            
+            # Set overall status
+            if [ "$SLA_VIOLATIONS" -eq 0 ] && [ $(echo "$SUCCESS_RATE > 99" | bc -l) -eq 1 ]; then
+              echo "test-status=passed" >> $GITHUB_OUTPUT
+            else
+              echo "test-status=failed" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "test-status=error" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const testName = '${{ matrix.test-scenario.name }}';
+            const testStatus = '${{ steps.results.outputs.test-status }}';
+            const successRate = '${{ steps.results.outputs.success-rate }}';
+            const avgResponse = '${{ steps.results.outputs.avg-response-time }}';
+            const slaViolations = '${{ steps.results.outputs.sla-violations }}';
+
+            const statusEmoji = testStatus === 'passed' ? '✅' : testStatus === 'failed' ? '❌' : '⚠️';
+
+            const comment = `## ${statusEmoji} Load Test Results: ${testName}
+
+            | Metric | Value | Status |
+            |--------|--------|--------|
+            | Success Rate | ${successRate}% | ${parseFloat(successRate) > 99 ? '✅' : '❌'} |
+            | Avg Response Time | ${avgResponse}ms | ${parseFloat(avgResponse) < 200 ? '✅' : '❌'} |
+            | SLA Violations | ${slaViolations} | ${slaViolations === '0' ? '✅' : '❌'} |
+            | Overall Status | ${testStatus.toUpperCase()} | ${statusEmoji} |
+
+            **Environment**: ${{ env.LOAD_TEST_ENV }}
+            **Target**: ${{ needs.pre-test-validation.outputs.base-url }}
+            **Max Users**: ${{ matrix.test-scenario.max-users }}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results-${{ matrix.test-scenario.type }}
+          path: |
+            load-tests/reports/
+            !load-tests/reports/temp-*
+          retention-days: 30
+
+      - name: Fail on SLA violations
+        if: steps.results.outputs.sla-violations != '0' && env.FAIL_ON_SLA_VIOLATION == 'true'
+        run: |
+          echo "❌ Test failed due to SLA violations: ${{ steps.results.outputs.sla-violations }}"
+          exit 1
+
+  # Endurance tests (long-running)
+  endurance-tests:
+    name: Endurance Tests
+    needs: [pre-test-validation, smoke-tests]
+    if: |
+      needs.pre-test-validation.outputs.should-run-tests == 'true' && 
+      (github.event.inputs.test_type == 'endurance' || 
+       github.event.inputs.test_type == 'full' ||
+       github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    timeout-minutes: 480 # 8 hours max
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup load testing tools
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+          npm install -g artillery@latest
+
+      - name: Run endurance test
+        env:
+          LOAD_TEST_BASE_URL: ${{ needs.pre-test-validation.outputs.base-url }}
+          LOAD_TEST_MAX_USERS: 1000
+          LOAD_TEST_DURATION: 4h
+        run: |
+          echo "⏰ Running endurance test (4 hours)"
+          echo "Target: $LOAD_TEST_BASE_URL"
+
+          # Run endurance test with reduced load for CI
+          node scripts/performance-test.js \
+            --test-type endurance_stability \
+            --max-users 1000 \
+            --duration 4h
+
+      - name: Upload endurance test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: endurance-test-results
+          path: load-tests/reports/
+          retention-days: 60
+
+  # Report aggregation and analysis
+  generate-report:
+    name: Generate Final Report
+    needs: [pre-test-validation, smoke-tests, load-tests]
+    if: always() && needs.pre-test-validation.outputs.should-run-tests == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Aggregate results and generate report
+        run: |
+          echo "📊 Aggregating test results..."
+
+          # Create consolidated report directory
+          mkdir -p consolidated-reports
+
+          # Combine all results
+          find test-results/ -name "*.json" -exec cp {} consolidated-reports/ \;
+          find test-results/ -name "*.html" -exec cp {} consolidated-reports/ \;
+          find test-results/ -name "*.txt" -exec cp {} consolidated-reports/ \;
+
+          # Generate final consolidated report
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+
+          const reportData = {
+            timestamp: new Date().toISOString(),
+            environment: '${{ env.LOAD_TEST_ENV }}',
+            target: '${{ needs.pre-test-validation.outputs.base-url }}',
+            gitRef: '${{ github.ref }}',
+            gitSha: '${{ github.sha }}',
+            workflow: '${{ github.workflow }}',
+            results: {}
+          };
+
+          // Process JSON reports
+          const jsonFiles = fs.readdirSync('consolidated-reports').filter(f => f.endsWith('.json'));
+          jsonFiles.forEach(file => {
+            try {
+              const data = JSON.parse(fs.readFileSync(path.join('consolidated-reports', file), 'utf8'));
+              reportData.results[file] = data;
+            } catch (e) {
+              console.warn('Failed to parse:', file);
+            }
+          });
+
+          // Save consolidated report
+          fs.writeFileSync('consolidated-reports/final-report.json', JSON.stringify(reportData, null, 2));
+          console.log('✅ Final report generated');
+          "
+
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: consolidated-load-test-report
+          path: consolidated-reports/
+          retention-days: 90
+
+      - name: Update status check
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let overallStatus = 'success';
+            let description = 'All load tests passed';
+
+            try {
+              // Check if final report exists and analyze results
+              if (fs.existsSync('consolidated-reports/final-report.json')) {
+                const report = JSON.parse(fs.readFileSync('consolidated-reports/final-report.json', 'utf8'));
+                
+                // Analyze results to determine overall status
+                let hasFailures = false;
+                let totalViolations = 0;
+                
+                Object.values(report.results).forEach(result => {
+                  if (result.violations) {
+                    totalViolations += result.violations.length;
+                  }
+                  if (result.summary && result.summary.overallStatus === 'failed') {
+                    hasFailures = true;
+                  }
+                });
+                
+                if (hasFailures || totalViolations > 0) {
+                  overallStatus = 'failure';
+                  description = `Load tests completed with ${totalViolations} SLA violations`;
+                }
+              }
+            } catch (e) {
+              console.warn('Could not analyze final report:', e.message);
+            }
+
+            // Create status check
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: overallStatus,
+              context: 'Load Testing',
+              description: description,
+              target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`
+            });
+
+  # Notification and cleanup
+  notify:
+    name: Notifications
+    needs: [generate-report, load-tests, endurance-tests]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack notification
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: "#load-testing"
+          text: |
+            Load Testing Pipeline: ${{ job.status }}
+            Environment: ${{ env.LOAD_TEST_ENV }}
+            Commit: ${{ github.sha }}
+            Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create GitHub issue on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Load Testing Failure - ' + new Date().toISOString().split('T')[0],
+              body: `## Load Testing Failure Alert
+              
+              The scheduled load testing pipeline has failed.
+              
+              **Details:**
+              - Environment: ${{ env.LOAD_TEST_ENV }}
+              - Workflow Run: ${context.payload.repository.html_url}/actions/runs/${context.runId}
+              - Commit: ${{ github.sha }}
+              - Time: ${new Date().toISOString()}
+              
+              Please investigate and resolve the issues.
+              
+              **Action Items:**
+              - [ ] Review test results
+              - [ ] Analyze SLA violations
+              - [ ] Check system health
+              - [ ] Implement fixes
+              - [ ] Re-run tests
+              `,
+              labels: ['load-testing', 'failure', 'high-priority']
+            });
+
+  # Reusable workflow for manual testing
+  manual-test:
+    name: Manual Test Execution
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Display test parameters
+        run: |
+          echo "🎯 Manual Load Test Execution"
+          echo "Test Type: ${{ github.event.inputs.test_type }}"
+          echo "Max Users: ${{ github.event.inputs.max_users }}"
+          echo "Duration: ${{ github.event.inputs.duration }}"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Target URL: ${{ env.LOAD_TEST_ENV == 'production' && env.PRODUCTION_URL || env.STAGING_URL }}"

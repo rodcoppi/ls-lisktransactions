@@ -1,0 +1,97 @@
+# Artillery Base Configuration
+# Enterprise-grade load testing for 1M+ requests per day
+
+config:
+  # Target configuration
+  target: "{{ $processEnvironment.LOAD_TEST_BASE_URL || 'http://localhost:3000' }}"
+
+  # HTTP configuration
+  http:
+    timeout: 30
+    pool: 50 # Connection pool size per worker
+    maxSockets: 50
+    keepAlive: true
+
+  # TLS configuration for HTTPS
+  tls:
+    rejectUnauthorized: false
+
+  # Payload configuration
+  payload:
+    path: "../data/test-data.csv"
+    fields:
+      - "userId"
+      - "email"
+      - "metricType"
+      - "value"
+    order: sequence
+    skipHeader: true
+
+  # Default headers for all requests
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      User-Agent: "Artillery-LoadTest/2.0"
+
+  # Plugin configuration
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    publish-metrics:
+      - type: statsd
+        host: localhost
+        port: 8125
+        prefix: "artillery"
+    expect:
+      outputFormat: prettyError
+
+  # Rate limiting
+  rateLimit: 1000 # Max requests per second per worker
+
+  # Memory and performance settings
+  maxVusers: 10000
+  statsInterval: 10 # Stats reporting interval in seconds
+
+  # Environment variables for different environments
+  environments:
+    local:
+      target: "http://localhost:3000"
+      phases:
+        - duration: 300
+          arrivalRate: 10
+          name: "Local testing"
+
+    staging:
+      target: "https://staging.liskcounter.com"
+      phases:
+        - duration: 600
+          arrivalRate: 50
+          name: "Staging validation"
+
+    production:
+      target: "https://liskcounter.com"
+      phases:
+        - duration: 1800
+          arrivalRate: 100
+          name: "Production testing"
+
+# Performance thresholds and expectations
+expectations:
+  - http.response_time.p99: 500
+  - http.response_time.p95: 200
+  - http.response_time.median: 100
+  - http.codes.200: 99.9
+  - http.codes.4xx: 0.01
+  - http.codes.5xx: 0.001
+
+# Before hooks - setup
+before:
+  - log: "Starting Artillery load test"
+  - log: "Target: {{ target }}"
+  - log: "Max VUs: {{ maxVusers }}"
+
+# After hooks - cleanup
+after:
+  - log: "Load test completed"
+  - log: "Check metrics for performance analysis"

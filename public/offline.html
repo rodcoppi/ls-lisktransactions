@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Lisk Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
+        }
+        
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .offline-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .offline-message {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .retry-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .retry-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .cached-data {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .cached-data h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+        }
+        
+        .cached-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .cached-item:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 768px) {
+            .offline-container {
+                padding: 1rem;
+            }
+            
+            .offline-title {
+                font-size: 1.5rem;
+            }
+            
+            .offline-message {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">🌐</div>
+        
+        <div class="offline-title">You're Offline</div>
+        
+        <div class="offline-message">
+            It looks like you're not connected to the internet. Don't worry! Some features may still be available from cached data.
+        </div>
+        
+        <button class="retry-button" onclick="window.location.reload()">
+            Try Again
+        </button>
+        
+        <div class="cached-data" id="cachedData" style="display: none;">
+            <h3>Available Cached Data</h3>
+            <div id="cacheList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check for cached data and display available content
+        function checkCachedData() {
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    if (cacheNames.length > 0) {
+                        document.getElementById('cachedData').style.display = 'block';
+                        
+                        const cacheList = document.getElementById('cacheList');
+                        
+                        cacheNames.forEach(async (cacheName) => {
+                            if (cacheName.includes('lisk-dashboard')) {
+                                const cache = await caches.open(cacheName);
+                                const keys = await cache.keys();
+                                
+                                if (keys.length > 0) {
+                                    const item = document.createElement('div');
+                                    item.className = 'cached-item';
+                                    item.innerHTML = `
+                                        <span>${cacheName.replace('lisk-dashboard-cache-', '').toUpperCase()}</span>
+                                        <span>${keys.length} items</span>
+                                    `;
+                                    cacheList.appendChild(item);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        // Check network status
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }
+
+        // Listen for network changes
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', () => {
+            console.log('Network connection lost');
+        });
+
+        // Check for cached data when page loads
+        document.addEventListener('DOMContentLoaded', checkCachedData);
+
+        // Auto-retry when network comes back
+        setInterval(() => {
+            if (navigator.onLine) {
+                // Test network connectivity
+                fetch('/', { method: 'HEAD', cache: 'no-cache' })
+                    .then(() => {
+                        window.location.reload();
+                    })
+                    .catch(() => {
+                        // Still offline
+                    });
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

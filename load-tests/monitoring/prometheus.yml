@@ -1,0 +1,124 @@
+# Prometheus Configuration for Load Testing
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'load-testing'
+    environment: 'loadtest'
+
+# Alert manager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - "alert-rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # K6 metrics via StatsD exporter
+  - job_name: 'k6-statsd'
+    static_configs:
+      - targets: ['prometheus-statsd-exporter:9102']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # Application under test
+  - job_name: 'application'
+    static_configs:
+      - targets: ['app:3000']
+    metrics_path: /api/metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    honor_labels: false
+    params:
+      format: ['prometheus']
+
+  # Database metrics (if exposed)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis metrics (if exposed)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # Load test infrastructure monitoring
+  - job_name: 'loadtest-infrastructure'
+    static_configs:
+      - targets: 
+        - 'k6-master:6565'
+        - 'load-test-orchestrator:8080'
+    scrape_interval: 15s
+
+  # System metrics from load generators
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+        - 'node-exporter:9100'
+    scrape_interval: 30s
+
+  # Docker container metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+
+  # Artillery metrics (if available via custom exporter)
+  - job_name: 'artillery'
+    static_configs:
+      - targets: ['artillery-runner:9200']
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Load balancer metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-loadtest:9113']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Custom load test metrics
+  - job_name: 'custom-metrics'
+    static_configs:
+      - targets: ['result-aggregator:8080']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+# Storage configuration
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 10GB
+    wal-compression: true
+
+# Remote write configuration (optional - for long-term storage)
+# remote_write:
+#   - url: "https://your-remote-storage/api/v1/write"
+#     basic_auth:
+#       username: "your-username"
+#       password: "your-password"
+
+# Global configuration
+global:
+  # Scrape targets every 15 seconds
+  scrape_interval: 15s
+  # Evaluate rules every 15 seconds
+  evaluation_interval: 15s
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager)
+  external_labels:
+    monitor: 'load-test-monitor'
+    cluster: 'load-testing-cluster'

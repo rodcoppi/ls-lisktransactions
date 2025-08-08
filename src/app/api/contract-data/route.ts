@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cacheManager } from '@/lib/cache-manager';
+import { cacheManager } from '../../../lib/cache-manager';
 
 export async function GET() {
   try {

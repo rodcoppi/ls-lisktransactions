@@ -48,7 +48,7 @@ function getTimeAgo(timestamp: string): string {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<LiskStats | null>(null);
+  const [, setStats] = useState<LiskStats | null>(null);
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +100,7 @@ export default function Dashboard() {
                 '📊 Final steps... Organizing data for dashboard...'
               ];
               const messageIndex = Math.min(Math.floor(pollAttempts / 5), progressMessages.length - 1);
-              setFetchProgress(progressMessages[messageIndex]);
+              setFetchProgress(progressMessages[messageIndex] || 'Loading...');
               
               // Continue polling if under max attempts
               if (pollAttempts < maxAttempts) {
@@ -130,7 +130,7 @@ export default function Dashboard() {
         }
         
       } catch (err) {
-        setError('Error loading data: ' + err.message);
+        setError('Error loading data: ' + (err instanceof Error ? err.message : 'Unknown error'));
         setLoading(false);
       }
     };
@@ -509,7 +509,7 @@ export default function Dashboard() {
               animation: 'shimmer 3s infinite 1s'
             }}></div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
-              📊 Today's Transactions
+              📊 Today&apos;s Transactions
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
               {analysis?.todayTxs?.toLocaleString() || 0}

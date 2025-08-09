@@ -517,14 +517,12 @@ export class CacheManagerV2 {
     const latestCompleteDateFormatted = formatDateLongUTC(latestCompleteDate);
     const latestDayTxs = cache.dailyTotals[latestCompleteDate] || 0;
 
-    // Calculate weekly metrics
+    // Calculate weekly metrics - sum available days even if incomplete
     const weeklyValidation = validateWeeklyWindow(cache, latestCompleteDate);
     let weeklyTxs = 0;
-    if (weeklyValidation.ok) {
-      weeklyTxs = weeklyValidation.dates.reduce((sum, date) => 
-        sum + (cache.dailyTotals[date] || 0), 0
-      );
-    }
+    weeklyTxs = weeklyValidation.dates.reduce((sum, date) => 
+      sum + (cache.dailyTotals[date] || 0), 0
+    );
     
     const weeklyPeriod = weeklyPeriodUTC(cache, latestCompleteDate);
 

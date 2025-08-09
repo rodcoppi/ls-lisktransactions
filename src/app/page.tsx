@@ -339,7 +339,7 @@ export default function Dashboard() {
               textShadow: '0 0 30px rgba(2,255,210,0.3)',
               letterSpacing: '-0.5px'
             }}>
-              🎲 LuckySea Analytics Dashboard
+              LuckySea Analytics Dashboard
             </h1>
             <div style={{ 
               display: 'inline-block', 

@@ -1,24 +1,22 @@
 {
   "schemaVersion": "1.2.0",
-  "generatedAtUTC": "2025-08-09T05:19:04.755Z",
+  "generatedAtUTC": "2025-08-09T05:22:43.728Z",
   "source": "migrated-from-v1",
-  "integrity": "sha256:6463a1c92c0cdd46bd92b8cb0e62a6d141d4a4d79bc72b161a1551fb649afd81",
+  "integrity": "sha256:e26c19a32101218e71d8971f676c030453f827c0bbf8e3dad2d86a9c1e482e50",
   "dailyTotals": {
     "2025-08-05": 7436,
-    "2025-08-04": 3,
     "2025-08-06": 9357,
     "2025-08-07": 7639,
     "2025-08-08": 6241
   },
   "dailyStatus": {
     "2025-08-05": "complete",
-    "2025-08-04": "complete",
     "2025-08-06": "complete",
     "2025-08-07": "complete",
     "2025-08-08": "complete"
   },
   "monthlyTotals": {
-    "2025-08": 30676
+    "2025-08": 30673
   },
   "recentHourly": {
     "2025-08-05": [
@@ -46,32 +44,6 @@
       276,
       627,
       3818
-    ],
-    "2025-08-04": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      3,
-      0
     ],
     "2025-08-06": [
       192,
@@ -157,7 +129,7 @@
     "lastTxIndex": 0,
     "lastTxHash": ""
   },
-  "lastUpdate": "2025-08-09T05:19:04.755Z",
-  "totalTransactions": 30676,
-  "totalDaysActive": 5
+  "lastUpdate": "2025-08-09T05:22:43.728Z",
+  "totalTransactions": 30673,
+  "totalDaysActive": 4
 }

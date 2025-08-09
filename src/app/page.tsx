@@ -198,7 +198,7 @@ export default function Dashboard() {
       
       <div className="max-w-6xl mx-auto p-6 relative z-10">
         {/* Header */}
-        <div className="mb-12 p-12 bg-gradient-to-br from-[#041924] to-[#052738] border border-white/15 rounded-xl relative overflow-hidden shadow-2xl animate-slide-down">
+        <div className="mb-12 p-12 bg-gradient-to-br from-[#041924] to-[#052738] border border-white/15 rounded-xl relative overflow-hidden shadow-2xl">
           <div className="absolute inset-0 bg-gradient-radial from-emerald-400/3 to-transparent pointer-events-none"></div>
           
           {/* Logos */}

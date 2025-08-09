@@ -1,10 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-interface LiskStats {
-  secondary_coin_price: string;
-}
+import { useEffect, useState, useCallback } from "react";
 
 interface ContractAnalysis {
   // Precise date-based data
@@ -45,7 +41,11 @@ interface ContractData {
   totalTransactions: number;
   analysis: ContractAnalysis;
   lastUpdate: string;
+  schemaVersion?: string;
 }
+
+// UTC helper for consistent date handling
+const asUTCDate = (key: string): Date => new Date(`${key}T00:00:00Z`);
 
 function getTimeAgo(timestamp: string): string {
   const now = new Date();
@@ -64,120 +64,116 @@ function getTimeAgo(timestamp: string): string {
 }
 
 export default function Dashboard() {
-  const [, setStats] = useState<LiskStats | null>(null);
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchProgress, setFetchProgress] = useState<string | null>(null);
 
   const CONTRACT_ADDRESS = '0xf18485f75551FFCa4011C32a0885ea8C22336840';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  const fetchData = useCallback(async (signal?: AbortSignal) => {
+    try {
+      // Use V2 API with abort signal
+      const response = await fetch('/api/contract-data-v2', { signal });
+      const data = await response.json();
+      
+      if (data.totalTransactions === 0 && data.error) {
+        if (!isProduction) {
+          // In development, show progress and allow polling
+          setFetchProgress('🔄 Fetching historical transactions in development mode...');
+          return null; // Trigger polling
+        } else {
+          // In production, just inform user
+          setFetchProgress('📊 Data is being prepared. Please check back in a few minutes.');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      setContractData(data);
+      setFetchProgress(null);
+      setLoading(false);
+      
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return; // Ignore aborted requests
+      }
+      setError('Error loading data: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      setLoading(false);
+    }
+  }, [isProduction]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch Lisk stats first
-        const statsResponse = await fetch('https://blockscout.lisk.com/api/v2/stats');
-        const statsData = await statsResponse.json();
-        setStats(statsData);
-
-        // Try to fetch contract data
-        const contractResponse = await fetch('/api/contract-data');
-        const contractDataResponse = await contractResponse.json();
+    const abortController = new AbortController();
+    
+    const initData = async () => {
+      const result = await fetchData(abortController.signal);
+      
+      // Only start polling in development if data is not ready
+      if (result === null && !isProduction) {
+        let pollAttempts = 0;
+        const maxAttempts = 10; // Reduced for development
         
-        // If data is not ready (0 transactions), show progress and use smart polling
-        if (contractDataResponse.totalTransactions === 0 && contractDataResponse.error) {
-          setFetchProgress('🔄 Fetching all historical transactions... This may take 2-3 minutes on first load.');
+        const poll = async () => {
+          if (abortController.signal.aborted) return;
           
-          // Smart polling with exponential backoff to reduce API calls
-          let pollAttempts = 0;
-          const maxAttempts = 20; // Max 20 attempts over ~8 minutes
+          pollAttempts++;
+          console.log(`📡 Dev poll attempt ${pollAttempts}/${maxAttempts}`);
           
-          const smartPoll = async () => {
-            try {
-              pollAttempts++;
-              console.log(`📡 Smart poll attempt ${pollAttempts}/${maxAttempts}`);
-              
-              const pollResponse = await fetch('/api/contract-data');
-              const pollData = await pollResponse.json();
-              
-              if (pollData.totalTransactions > 0) {
-                console.log('✅ Cache ready! Found transactions:', pollData.totalTransactions);
-                setContractData(pollData);
-                setFetchProgress(null);
-                setLoading(false);
-                return;
-              }
-              
-              // Update progress message
-              const progressMessages = [
-                '🔄 Still fetching... Processing thousands of transactions from blockchain history.',
-                '⏳ Building cache from scratch... This takes a while on first load.',
-                '🚀 Almost there! Analyzing transaction patterns...',
-                '📊 Final steps... Organizing data for dashboard...'
-              ];
-              const messageIndex = Math.min(Math.floor(pollAttempts / 5), progressMessages.length - 1);
-              setFetchProgress(progressMessages[messageIndex] || 'Loading...');
-              
-              // Continue polling if under max attempts
-              if (pollAttempts < maxAttempts) {
-                // Exponential backoff: 10s, 15s, 20s, 25s, then 30s
-                const delay = Math.min(10000 + (pollAttempts * 5000), 30000);
-                console.log(`⏱️ Next poll in ${delay/1000}s`);
-                setTimeout(smartPoll, delay);
-              } else {
-                setFetchProgress('⏰ Taking longer than expected. Please refresh the page in a few minutes.');
-                console.log('❌ Max polling attempts reached');
-              }
-              
-            } catch (pollError) {
-              console.error('Polling error:', pollError);
-              if (pollAttempts < maxAttempts) {
-                setTimeout(smartPoll, 15000); // Retry in 15s on error
-              }
+          try {
+            const pollResponse = await fetch('/api/contract-data-v2', { 
+              signal: abortController.signal 
+            });
+            const pollData = await pollResponse.json();
+            
+            if (pollData.totalTransactions > 0) {
+              console.log('✅ Cache ready! Found transactions:', pollData.totalTransactions);
+              setContractData(pollData);
+              setFetchProgress(null);
+              setLoading(false);
+              return;
             }
-          };
-          
-          // Start smart polling after 10 seconds (give cache time to start)
-          setTimeout(smartPoll, 10000);
-          
-        } else {
-          setContractData(contractDataResponse);
-          setLoading(false);
-        }
+            
+            if (pollAttempts < maxAttempts) {
+              const delay = Math.min(5000 + (pollAttempts * 2000), 15000);
+              setTimeout(poll, delay);
+            } else {
+              setFetchProgress('⏰ Taking longer than expected. Please refresh the page.');
+              setLoading(false);
+            }
+            
+          } catch (pollError) {
+            if (pollError instanceof Error && pollError.name === 'AbortError') {
+              return;
+            }
+            console.error('Polling error:', pollError);
+            setFetchProgress('❌ Error during polling. Please refresh the page.');
+            setLoading(false);
+          }
+        };
         
-      } catch (err) {
-        setError('Error loading data: ' + (err instanceof Error ? err.message : 'Unknown error'));
-        setLoading(false);
+        // Start polling after 3 seconds in dev
+        setTimeout(poll, 3000);
       }
     };
-
-    fetchData();
-  }, []);
+    
+    initData();
+    
+    // Cleanup function
+    return () => {
+      abortController.abort();
+    };
+  }, [fetchData, isProduction]);
 
   const analysis = contractData?.analysis;
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0a', color: '#ffffff' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            width: '50px', 
-            height: '50px', 
-            border: '3px solid #2a2a2a',
-            borderTop: '3px solid #00ff88',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 20px'
-          }}></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#05202E] to-[#041924] text-white">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-gray-700 border-t-emerald-400 rounded-full animate-spin mx-auto mb-4"></div>
           <p>Loading LuckySea contract data...</p>
-          <style dangerouslySetInnerHTML={{
-            __html: `
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `
-          }} />
         </div>
       </div>
     );
@@ -185,9 +181,9 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0a' }}>
-        <div style={{ textAlign: 'center', color: '#ff6b6b' }}>
-          <h2>Error!</h2>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#05202E] to-[#041924]">
+        <div className="text-center text-red-400">
+          <h2 className="text-xl font-bold mb-2">Error!</h2>
           <p>{error}</p>
         </div>
       </div>
@@ -195,122 +191,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #05202E 0%, #041924 50%, #05202E 100%)',
-      backgroundAttachment: 'fixed',
-      padding: '20px', 
-      color: '#E5E7EB',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <div className="min-h-screen bg-gradient-to-br from-[#05202E] via-[#041924] to-[#05202E] text-gray-200 relative overflow-hidden">
       {/* Subtle background elements */}
-      <div style={{
-        position: 'absolute',
-        top: '15%',
-        right: '20%',
-        width: '200px',
-        height: '200px',
-        background: 'radial-gradient(circle, rgba(2,255,210,0.04) 0%, transparent 70%)',
-        borderRadius: '50%',
-        animation: 'float1 8s ease-in-out infinite'
-      }}></div>
-      <div style={{
-        position: 'absolute',
-        bottom: '25%',
-        left: '15%',
-        width: '150px',
-        height: '150px',
-        background: 'radial-gradient(circle, rgba(4,25,36,0.2) 0%, transparent 70%)',
-        borderRadius: '50%',
-        animation: 'float2 10s ease-in-out infinite reverse'
-      }}></div>
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes float1 {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-          }
-          @keyframes float2 {
-            0%, 100% { transform: translateX(0px) rotate(0deg); }
-            50% { transform: translateX(15px) rotate(-180deg); }
-          }
-          @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-          }
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          @keyframes slideInDown {
-            from {
-              opacity: 0;
-              transform: translateY(-50px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          @keyframes expandLine {
-            to {
-              width: 100%;
-            }
-          }
-          @keyframes pulse {
-            0%, 100% {
-              opacity: 1;
-              transform: scale(1);
-            }
-            50% {
-              opacity: 0.6;
-              transform: scale(1.2);
-            }
-          }
-        `
-      }} />
+      <div className="absolute top-[15%] right-[20%] w-48 h-48 bg-gradient-radial from-emerald-400/5 to-transparent rounded-full animate-float-slow"></div>
+      <div className="absolute bottom-[25%] left-[15%] w-36 h-36 bg-gradient-radial from-slate-600/20 to-transparent rounded-full animate-float-reverse"></div>
       
-      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
-        <div style={{ 
-          marginBottom: '60px',
-          padding: '50px 40px',
-          background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          border: '1px solid rgba(255,255,255,0.15)',
-          borderRadius: '12px',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          animation: 'slideInDown 0.8s ease-out'
-        }}>
-          <div style={{
-            content: '',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at center, rgba(2, 255, 210, 0.03) 0%, transparent 60%)',
-            pointerEvents: 'none'
-          }}></div>
-          {/* Logos Section - Centered */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            gap: '20px', 
-            marginBottom: '25px', 
-            position: 'relative', 
-            zIndex: 2 
-          }}>
-            <svg width="80" height="28" viewBox="0 0 114 40" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <div className="max-w-6xl mx-auto p-6 relative z-10">
+        {/* Header */}
+        <div className="mb-12 p-12 bg-gradient-to-br from-[#041924] to-[#052738] border border-white/15 rounded-xl relative overflow-hidden shadow-2xl animate-slide-down">
+          <div className="absolute inset-0 bg-gradient-radial from-emerald-400/3 to-transparent pointer-events-none"></div>
+          
+          {/* Logos */}
+          <div className="flex items-center justify-center gap-6 mb-6 relative z-2">
+            <svg width="80" height="28" viewBox="0 0 114 40" fill="white" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M71.1139 18.063H64.4346V39.6471H71.1139V18.063Z"></path>
               <path d="M87.6884 27.794C86.7201 27.3527 85.5011 26.9209 84.0344 26.5083C83.2598 26.2606 82.609 26.0384 82.082 25.8448C81.555 25.6511 81.1392 25.4225 80.8376 25.159C80.5328 24.8956 80.3804 24.5717 80.3804 24.1844C80.3804 23.8257 80.5455 23.5051 80.8788 23.2289C81.2122 22.9527 81.682 22.813 82.2915 22.813C82.955 22.813 83.4757 23.0194 83.8471 23.4352C84.1296 23.7495 84.3391 24.1305 84.4693 24.5717H91.0344C90.8852 23.2606 90.4534 22.0924 89.7423 21.067C89.009 20.0162 87.9995 19.1908 86.7106 18.5971C85.4249 18.0035 83.9233 17.7051 82.2058 17.7051C80.3804 17.7051 78.8217 17.9749 77.536 18.5146C76.2503 19.0543 75.2788 19.8098 74.628 20.7781C73.9772 21.7463 73.6534 22.8416 73.6534 24.0575C73.6534 25.3876 73.9931 26.4797 74.6693 27.3368C75.3487 28.194 76.1645 28.8606 77.1201 29.3305C78.0757 29.8003 79.2725 30.2702 80.7106 30.7432C81.5138 31.0194 82.1836 31.2702 82.7233 31.4892C83.263 31.7114 83.6915 31.9749 84.009 32.2797C84.3265 32.5844 84.4852 32.9305 84.4852 33.3178C84.4852 33.7336 84.3042 34.086 83.9455 34.3749C83.5868 34.667 83.0471 34.8098 82.3264 34.8098C81.6058 34.8098 80.9614 34.5971 80.4788 34.1654C80.1423 33.867 79.8979 33.4924 79.7423 33.0384H73.1836C73.3296 34.3241 73.7455 35.4765 74.4376 36.4892C75.1836 37.5844 76.228 38.4416 77.5709 39.0638C78.9138 39.686 80.4979 39.9971 82.3233 39.9971C84.2598 39.9971 85.9011 39.7051 87.2439 39.1241C88.5868 38.5432 89.5899 37.7463 90.2534 36.7368C90.9169 35.7273 91.2503 34.5432 91.2503 33.1876C91.2503 31.8321 90.8979 30.6352 90.1931 29.7622C89.4884 28.8892 88.6503 28.2321 87.682 27.7908L87.6884 27.794Z"></path>
               <path d="M51.7809 10.9048L45.1016 18.0635V39.6445H62.4V33.0349H51.7809V10.9048Z"></path>
@@ -320,91 +213,41 @@ export default function Dashboard() {
                 <path d="M13.2581 33.0349L8.49939 27.9237L16.5089 14.7968L12.5121 8.25391L0.000976562 28.7523L10.1692 39.6444H13.5407L19.7216 33.0349H13.2581Z"></path>
               </g>
             </svg>
-            <div style={{ 
-              width: '3px', 
-              height: '40px', 
-              background: 'linear-gradient(180deg, transparent 0%, #02FFD2 50%, transparent 100%)',
-              borderRadius: '2px',
-              boxShadow: '0 0 10px rgba(2,255,210,0.5)'
-            }}></div>
-            <img src="https://luckysea.gg/assets/logotipo.svg" alt="LuckySea" style={{ width: '90px', height: 'auto' }} />
+            <div className="w-1 h-10 bg-gradient-to-b from-transparent via-emerald-400 to-transparent rounded-full shadow-emerald-400/50 shadow-md"></div>
+            <img 
+              src="https://luckysea.gg/assets/logotipo.svg" 
+              alt="LuckySea" 
+              className="w-24 h-auto" 
+            />
           </div>
-          {/* Title Section - Centered */}
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <h1 style={{ 
-              fontSize: '2.8rem', 
-              fontWeight: 'bold', 
-              color: '#ffffff', 
-              marginBottom: '12px',
-              textShadow: '0 0 30px rgba(2,255,210,0.3)',
-              letterSpacing: '-0.5px'
-            }}>
+          
+          {/* Title */}
+          <div className="text-center mb-6">
+            <h1 className="text-4xl font-bold text-white mb-3 text-shadow-emerald animate-fade-in">
               LuckySea Analytics Dashboard
             </h1>
-            <div style={{ 
-              display: 'inline-block', 
-              backgroundColor: 'rgba(2,255,210,0.2)', 
-              border: '1px solid rgba(2,255,210,0.5)',
-              borderRadius: '20px', 
-              padding: '4px 12px', 
-              fontSize: '0.85rem', 
-              color: '#02FFD2',
-              fontWeight: '500',
-              marginBottom: '8px'
-            }}>
+            <div className="inline-block bg-emerald-400/20 border border-emerald-400/50 rounded-full px-4 py-1 text-sm text-emerald-400 font-medium">
               🌍 All times in UTC timezone
             </div>
           </div>
-          {/* Status and Actions Section */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '25px', gap: '20px' }}>
-            {/* Left: Status */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ 
-                  width: '8px', 
-                  height: '8px', 
-                  backgroundColor: '#02FFD2', 
-                  borderRadius: '50%',
-                  boxShadow: '0 0 8px rgba(2,255,210,0.6)',
-                  animation: 'pulse 2s infinite'
-                }}></div>
-                <span style={{ color: '#02FFD2', fontSize: '0.9rem', fontWeight: '500' }}>
-                  System Online
-                </span>
+          
+          {/* Status and Actions */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-emerald-400/50 shadow-sm"></div>
+                <span className="text-emerald-400 text-sm font-medium">System Online</span>
               </div>
-              <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(255,255,255,0.2)' }}></div>
-              <span style={{ color: '#E5E7EB', fontSize: '0.9rem' }}>
-                Pre-loaded historical data
-              </span>
+              <div className="w-px h-4 bg-white/20"></div>
+              <span className="text-gray-300 text-sm">Pre-loaded historical data</span>
             </div>
             
-            {/* Right: Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div className="flex gap-3">
               <a 
                 href="https://blockscout.lisk.com/address/0xf18485f75551FFCa4011C32a0885ea8C22336840?tab=txs" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                style={{ 
-                  backgroundColor: '#02FFD2',
-                  color: '#041924',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#01E5C4';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = '#02FFD2';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                className="bg-emerald-400 text-[#041924] px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:bg-emerald-300 hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2"
               >
                 📈 Live Transactions
               </a>
@@ -412,429 +255,120 @@ export default function Dashboard() {
                 href="https://blockscout.lisk.com/address/0xf18485f75551FFCa4011C32a0885ea8C22336840?tab=index" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  color: '#E5E7EB',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  fontSize: '0.85rem',
-                  fontWeight: '500',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                className="bg-white/10 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium border border-white/20 transition-all hover:bg-white/15 hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2"
               >
                 🔍 Contract Details
               </a>
             </div>
-            <div style={{ 
-              backgroundColor: 'rgba(2,255,210,0.1)', 
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              border: '1px solid rgba(2,255,210,0.3)' 
-            }}>
-              <p style={{ color: '#02FFD2', fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
+            
+            <div className="bg-emerald-400/10 border border-emerald-400/30 rounded-lg px-4 py-2">
+              <p className="text-emerald-400 text-sm font-medium">
                 📊 Last updated: {contractData?.lastUpdate ? getTimeAgo(contractData.lastUpdate) : 'Loading...'}
               </p>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: '4px 0 0 0' }}>
+              <p className="text-gray-400 text-xs mt-1">
                 Historical data • Daily snapshots at 00:00 UTC
               </p>
             </div>
           </div>
           
-          {/* Contract Address - Smaller, Bottom */}
-          <div style={{ 
-            textAlign: 'center', 
-            marginTop: '15px', 
-            paddingTop: '15px',
-            borderTop: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <p style={{ color: '#888', fontSize: '0.8rem', margin: 0 }}>
-              Contract: <code style={{ backgroundColor: 'rgba(2,255,210,0.1)', padding: '2px 6px', borderRadius: '4px', color: '#02FFD2', fontSize: '0.75rem' }}>{CONTRACT_ADDRESS}</code>
+          <div className="text-center mt-4 pt-4 border-t border-white/10">
+            <p className="text-gray-500 text-sm">
+              Contract: <code className="bg-emerald-400/10 text-emerald-400 px-2 py-1 rounded text-xs">{CONTRACT_ADDRESS}</code>
             </p>
           </div>
+          
           {fetchProgress && (
-            <div style={{ 
-              marginTop: '15px', 
-              padding: '15px', 
-              backgroundColor: '#2a1a0a', 
-              borderRadius: '8px', 
-              border: '2px solid #ffd93d',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '1.1rem', color: '#ffd93d', fontWeight: '500' }}>
-                {fetchProgress}
+            <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg text-center">
+              <div className="text-yellow-400 text-sm font-medium">{fetchProgress}</div>
+              <div className="w-full h-1 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-yellow-400 to-emerald-400 animate-progress rounded-full"></div>
               </div>
-              <div style={{ 
-                width: '100%', 
-                height: '4px', 
-                backgroundColor: '#444', 
-                borderRadius: '2px', 
-                marginTop: '10px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #ffd93d, #00ff88)',
-                  animation: 'progress 2s ease-in-out infinite',
-                  borderRadius: '2px'
-                }}></div>
-              </div>
-              <style dangerouslySetInnerHTML={{
-                __html: `
-                  @keyframes progress {
-                    0% { width: 0%; }
-                    50% { width: 100%; }
-                    100% { width: 0%; }
-                  }
-                `
-              }} />
             </div>
           )}
         </div>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '20px',
-          marginBottom: '30px'
-        }}>
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Transactions - PRIMARY CARD */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, rgba(2,255,210,0.08) 0%, rgba(4,25,36,1) 100%)',
-            padding: '28px', 
-            borderRadius: '16px', 
-            boxShadow: '0 6px 24px rgba(2,255,210,0.12), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.4)',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-3px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.2), inset 0 1px 0 rgba(255,255,255,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 6px 24px rgba(2,255,210,0.12), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              🎲 Total Transactions
-            </h3>
-            <p style={{ fontSize: '2.4rem', fontWeight: '700', color: '#02FFD2', position: 'relative' }}>
+          <div className="bg-gradient-to-br from-emerald-400/10 to-[#041924] p-8 rounded-2xl shadow-2xl border border-emerald-400/40 relative overflow-hidden transition-all hover:-translate-y-1 hover:shadow-emerald-400/20 hover:shadow-2xl animate-fade-up">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/5 to-transparent pointer-events-none animate-shimmer"></div>
+            <h3 className="text-xl font-semibold text-white mb-3 relative">🎲 Total Transactions</h3>
+            <p className="text-3xl font-bold text-emerald-400 relative">
               {contractData?.totalTransactions?.toLocaleString() || 0}
             </p>
           </div>
 
-          {/* Latest Complete Day Transactions - SECONDARY CARD */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '24px', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)', 
-            border: '1px solid rgba(255,255,255,0.15)',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            animation: 'fadeInUp 0.6s ease-out 0.2s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite 1s'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              📊 {analysis?.latestCompleteDateFormatted || 'Loading...'}
-            </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
-              {analysis?.latestDayTxs?.toLocaleString() || 0} transactions
+          {/* Latest Complete Day */}
+          <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-6 rounded-xl shadow-xl border border-white/15 transition-all hover:-translate-y-1 hover:shadow-2xl animate-fade-up delay-100">
+            <h3 className="text-lg font-semibold text-white mb-2">📊 {analysis?.latestCompleteDateFormatted || 'Loading...'}</h3>
+            <p className="text-2xl font-bold text-white">
+              {analysis?.latestDayTxs?.toLocaleString() || 0} <span className="text-sm font-normal text-gray-400">transactions</span>
             </p>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', position: 'relative' }}>
-              Complete 24h data
-            </p>
+            <p className="text-xs text-gray-500 mt-2">Complete 24h data</p>
           </div>
 
-          {/* Weekly Transactions */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '25px', 
-            borderRadius: '12px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            animation: 'fadeInUp 0.6s ease-out 0.3s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite 1.5s'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              📈 7-Day Period
-            </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
-              {analysis?.weeklyTxs?.toLocaleString() || 0} transactions
+          {/* Weekly Period */}
+          <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-6 rounded-xl shadow-xl border border-emerald-400/30 transition-all hover:-translate-y-1 hover:shadow-2xl animate-fade-up delay-200">
+            <h3 className="text-lg font-semibold text-white mb-2">📈 7-Day Period</h3>
+            <p className="text-2xl font-bold text-white">
+              {analysis?.weeklyTxs?.toLocaleString() || 0} <span className="text-sm font-normal text-gray-400">transactions</span>
             </p>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', position: 'relative' }}>
-              {analysis?.weeklyPeriod || 'Loading period...'}
-            </p>
+            <p className="text-xs text-gray-500 mt-2">{analysis?.weeklyPeriod || 'Loading period...'}</p>
           </div>
 
-          {/* Monthly Transactions */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '25px', 
-            borderRadius: '12px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            animation: 'fadeInUp 0.6s ease-out 0.4s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite 2s'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              🗓️ Month Progress
-            </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
-              {analysis?.monthlyTxs?.toLocaleString() || 0} transactions
+          {/* Monthly Progress */}
+          <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-6 rounded-xl shadow-xl border border-emerald-400/30 transition-all hover:-translate-y-1 hover:shadow-2xl animate-fade-up delay-300">
+            <h3 className="text-lg font-semibold text-white mb-2">🗓️ Month Progress</h3>
+            <p className="text-2xl font-bold text-white">
+              {analysis?.monthlyTxs?.toLocaleString() || 0} <span className="text-sm font-normal text-gray-400">transactions</span>
             </p>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', position: 'relative' }}>
-              {analysis?.monthlyPeriod || 'Loading period...'}
-            </p>
+            <p className="text-xs text-gray-500 mt-2">{analysis?.monthlyPeriod || 'Loading period...'}</p>
           </div>
 
           {/* Average per Day */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '25px', 
-            borderRadius: '12px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            animation: 'fadeInUp 0.6s ease-out 0.5s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite 2.5s'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              📊 Average per Day
-            </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
+          <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-6 rounded-xl shadow-xl border border-emerald-400/30 transition-all hover:-translate-y-1 hover:shadow-2xl animate-fade-up delay-400">
+            <h3 className="text-lg font-semibold text-white mb-2">📊 Average per Day</h3>
+            <p className="text-2xl font-bold text-emerald-400">
               {analysis?.avgTxsPerDay?.toLocaleString() || 0}
             </p>
           </div>
 
           {/* Average per Month */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '25px', 
-            borderRadius: '12px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            animation: 'fadeInUp 0.6s ease-out 0.6s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite 3s'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              📈 Average per Month
-            </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
+          <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-6 rounded-xl shadow-xl border border-emerald-400/30 transition-all hover:-translate-y-1 hover:shadow-2xl animate-fade-up delay-500">
+            <h3 className="text-lg font-semibold text-white mb-2">📈 Average per Month</h3>
+            <p className="text-2xl font-bold text-emerald-400">
               {analysis?.avgTxsPerMonth?.toLocaleString() || 0}
             </p>
           </div>
 
           {/* Total Days Active */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '25px', 
-            borderRadius: '12px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
-            position: 'relative',
-            overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
-            transition: 'all 0.3s ease',
-            cursor: 'pointer',
-            animation: 'fadeInUp 0.6s ease-out 0.7s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)';
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              animation: 'shimmer 3s infinite 3.5s'
-            }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
-              🗓️ Total Days Active
-            </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
+          <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-6 rounded-xl shadow-xl border border-emerald-400/30 transition-all hover:-translate-y-1 hover:shadow-2xl animate-fade-up delay-600">
+            <h3 className="text-lg font-semibold text-white mb-2">🗓️ Total Days Active</h3>
+            <p className="text-2xl font-bold text-white">
               {analysis?.totalDaysActive?.toLocaleString() || 0}
             </p>
           </div>
         </div>
 
-        {/* Hourly Analysis - TERTIARY CARD */}
-        <div style={{ 
-          background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          padding: '28px', 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', 
-          border: '1px solid rgba(255,255,255,0.1)',
-          marginTop: '30px',
-          position: 'relative',
-          overflow: 'hidden',
-          animation: 'fadeInUp 0.8s ease-out 0.8s both'
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
-            animation: 'shimmer 4s infinite'
-          }}></div>
-          <h2 style={{ 
-            fontSize: '1.4rem', 
-            fontWeight: '600', 
-            marginBottom: '20px', 
-            color: '#E5E7EB', 
-            position: 'relative'
-          }}>📈 Hourly Activity - {analysis?.latestCompleteDateFormatted || 'Loading...'} (UTC)</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '10px' }}>
+        {/* Hourly Activity */}
+        <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-8 rounded-xl shadow-xl border border-white/10 mb-8 animate-fade-up delay-700">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-200">
+            📈 Hourly Activity - {analysis?.latestCompleteDateFormatted || 'Loading...'} (UTC)
+          </h2>
+          <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-12 xl:grid-cols-24 gap-2">
             {Array.from({ length: 24 }, (_, hour) => {
               const count = analysis?.hourlyData?.[hour] || 0;
               return (
-                <div key={hour} style={{ 
-                  textAlign: 'center', 
-                  padding: '10px', 
-                  backgroundColor: count > 0 ? 'rgba(2,255,210,0.2)' : 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  border: count > 0 ? '1px solid #02FFD2' : '1px solid rgba(255,255,255,0.1)',
-                  boxShadow: count > 0 ? '0 4px 15px rgba(2,255,210,0.2)' : 'none',
-                  transition: 'all 0.3s ease'
-                }}>
-                  <div style={{ fontSize: '0.8rem', color: '#E5E7EB' }}>{hour}h</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: '600', color: count > 0 ? '#02FFD2' : '#888' }}>
+                <div 
+                  key={hour} 
+                  className={`text-center p-3 rounded-lg transition-all hover:scale-105 ${
+                    count > 0 
+                      ? 'bg-emerald-400/20 border border-emerald-400 shadow-emerald-400/20 shadow-md' 
+                      : 'bg-white/5 border border-white/10'
+                  }`}
+                >
+                  <div className="text-xs text-gray-400">{hour}h</div>
+                  <div className={`text-sm font-semibold ${count > 0 ? 'text-emerald-400' : 'text-gray-600'}`}>
                     {count}
                   </div>
                 </div>
@@ -843,81 +377,35 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Daily Analysis - TERTIARY CARD */}
-        <div style={{ 
-          background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          padding: '28px', 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', 
-          border: '1px solid rgba(255,255,255,0.1)',
-          marginTop: '30px',
-          position: 'relative',
-          overflow: 'hidden',
-          animation: 'fadeInUp 0.8s ease-out 0.9s both'
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
-            animation: 'shimmer 4s infinite 1s'
-          }}></div>
-          <h2 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold', 
-            marginBottom: '20px', 
-            color: '#02FFD2', 
-            textShadow: '0 0 20px rgba(2,255,210,0.3)',
-            position: 'relative'
-          }}>📅 Daily Breakdown (Last 7 days UTC)</h2>
-          <div style={{ display: 'flex', gap: '15px', overflowX: 'auto' }}>
+        {/* Daily Breakdown */}
+        <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-8 rounded-xl shadow-xl border border-white/10 mb-8 animate-fade-up delay-800">
+          <h2 className="text-2xl font-bold mb-6 text-emerald-400 text-shadow-emerald">
+            📅 Daily Breakdown (Last 7 days UTC)
+          </h2>
+          <div className="flex gap-4 overflow-x-auto">
             {Object.keys(analysis?.dailyData || {}).length === 0 ? (
-              <div style={{ 
-                width: '100%', 
-                textAlign: 'center', 
-                padding: '30px', 
-                backgroundColor: '#2a2a2a',
-                borderRadius: '8px',
-                border: '2px dashed #666'
-              }}>
-                <div style={{ fontSize: '1.2rem', color: '#ffd93d', marginBottom: '10px' }}>⏳ Loading historical data...</div>
-                <div style={{ fontSize: '0.9rem', color: '#b3b3b3' }}>
-                  Daily breakdown will appear here once all transactions are processed
-                </div>
+              <div className="w-full text-center p-8 bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-600">
+                <div className="text-yellow-400 text-lg mb-2">⏳ Loading historical data...</div>
+                <div className="text-gray-400 text-sm">Daily breakdown will appear here once all transactions are processed</div>
               </div>
             ) : (
-              (() => {
-                const dailyEntries = Object.entries(analysis?.dailyData || {});
-                console.log('🔍 Daily data debug:', dailyEntries);
-                return dailyEntries
-                  .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-                  .slice(0, 7);
-              })().map(([date, count]) => (
-                  <div key={date} style={{ 
-                    minWidth: '120px', 
-                    textAlign: 'center', 
-                    padding: '15px', 
-                    background: 'linear-gradient(135deg, rgba(2,255,210,0.15) 0%, rgba(2,255,210,0.05) 100%)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(2,255,210,0.4)',
-                    boxShadow: '0 4px 20px rgba(2,255,210,0.2)',
-                    backdropFilter: 'blur(10px)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(2,255,210,0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0px)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(2,255,210,0.2)';
-                  }}>
-                    <div style={{ fontSize: '0.9rem', color: '#E5E7EB', marginBottom: '5px' }}>
-                      {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })}
+              Object.entries(analysis?.dailyData || {})
+                .sort(([a], [b]) => asUTCDate(b).getTime() - asUTCDate(a).getTime())
+                .slice(0, 7)
+                .map(([date, count]) => (
+                  <div 
+                    key={date} 
+                    className="min-w-[140px] text-center p-4 bg-gradient-to-br from-emerald-400/15 to-emerald-400/5 rounded-xl border border-emerald-400/40 shadow-emerald-400/20 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-emerald-400/30 hover:shadow-xl"
+                  >
+                    <div className="text-sm text-gray-300 mb-1">
+                      {asUTCDate(date).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        timeZone: 'UTC' 
+                      })}
                     </div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#02FFD2' }}>
+                    <div className="text-xl font-bold text-emerald-400">
                       {count.toLocaleString()}
                     </div>
                   </div>
@@ -926,87 +414,41 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Monthly Breakdown - TERTIARY CARD */}
-        <div style={{ 
-          background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          padding: '28px', 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', 
-          border: '1px solid rgba(255,255,255,0.1)',
-          marginTop: '30px',
-          position: 'relative',
-          overflow: 'hidden',
-          animation: 'fadeInUp 0.8s ease-out 1s both'
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
-            animation: 'shimmer 4s infinite 2s'
-          }}></div>
-          <h2 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold', 
-            marginBottom: '25px', 
-            color: '#02FFD2', 
-            textShadow: '0 0 20px rgba(2,255,210,0.3)',
-            position: 'relative'
-          }}>📊 Monthly Breakdown (UTC)</h2>
-          
-          <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', marginBottom: '20px' }}>
+        {/* Monthly Breakdown */}
+        <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-8 rounded-xl shadow-xl border border-white/10 animate-fade-up delay-900">
+          <h2 className="text-2xl font-bold mb-6 text-emerald-400 text-shadow-emerald">
+            📊 Monthly Breakdown (UTC)
+          </h2>
+          <div className="flex gap-4 overflow-x-auto">
             {Object.keys(analysis?.monthlyData || {}).length === 0 ? (
-              <div style={{ 
-                width: '100%', 
-                textAlign: 'center', 
-                padding: '30px', 
-                backgroundColor: '#2a2a2a',
-                borderRadius: '8px',
-                border: '2px dashed #666'
-              }}>
-                <div style={{ fontSize: '1.2rem', color: '#ffd93d', marginBottom: '10px' }}>⏳ Processing transaction history...</div>
-                <div style={{ fontSize: '0.9rem', color: '#b3b3b3' }}>
-                  Monthly breakdown will show once all historical data is analyzed
-                </div>
+              <div className="w-full text-center p-8 bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-600">
+                <div className="text-yellow-400 text-lg mb-2">⏳ Processing transaction history...</div>
+                <div className="text-gray-400 text-sm">Monthly breakdown will show once all historical data is analyzed</div>
               </div>
             ) : (
               Object.entries(analysis?.monthlyData || {})
                 .sort(([a], [b]) => b.localeCompare(a))
                 .map(([month, count]) => (
-                  <div key={month} style={{ 
-                    minWidth: '150px', 
-                    textAlign: 'center', 
-                    padding: '20px', 
-                    background: 'linear-gradient(135deg, rgba(2,255,210,0.15) 0%, rgba(2,255,210,0.05) 100%)',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(2,255,210,0.4)',
-                    boxShadow: '0 4px 20px rgba(2,255,210,0.2)',
-                    backdropFilter: 'blur(10px)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(2,255,210,0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0px)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(2,255,210,0.2)';
-                  }}>
-                    <div style={{ fontSize: '1rem', color: '#E5E7EB', marginBottom: '8px' }}>
-                      {new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  <div 
+                    key={month} 
+                    className="min-w-[180px] text-center p-6 bg-gradient-to-br from-emerald-400/15 to-emerald-400/5 rounded-xl border border-emerald-400/40 shadow-emerald-400/20 shadow-lg backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-emerald-400/30 hover:shadow-xl"
+                  >
+                    <div className="text-base text-gray-300 mb-2">
+                      {asUTCDate(month + '-01').toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        year: 'numeric', 
+                        timeZone: 'UTC' 
+                      })}
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', marginBottom: '5px' }}>
+                    <div className="text-2xl font-bold text-emerald-400 mb-1">
                       {count.toLocaleString()}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#E5E7EB' }}>transactions</div>
+                    <div className="text-sm text-gray-300">transactions</div>
                   </div>
                 ))
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

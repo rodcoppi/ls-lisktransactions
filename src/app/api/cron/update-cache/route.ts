@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cacheManager } from '@/lib/index';
+import { cacheManagerV2 } from '@/lib/cache-manager-v2';
 
 // 🎲 LuckySea Analytics - Daily Cache Update Cron Job
 // Runs at 00:00 UTC daily to fetch new transactions
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Force cache update
-    await cacheManager.forceUpdate();
+    // Force cache update using V2
+    await cacheManagerV2.forceUpdate();
     
     console.log('✅ Cron job completed successfully');
     

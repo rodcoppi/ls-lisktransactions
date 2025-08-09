@@ -204,36 +204,26 @@ export default function Dashboard() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Floating background elements with LuckySea colors */}
+      {/* Subtle background elements */}
       <div style={{
         position: 'absolute',
-        top: '10%',
-        right: '15%',
-        width: '300px',
-        height: '300px',
-        background: 'radial-gradient(circle, rgba(2,255,210,0.15) 0%, transparent 70%)',
-        borderRadius: '50%',
-        animation: 'float1 6s ease-in-out infinite'
-      }}></div>
-      <div style={{
-        position: 'absolute',
-        bottom: '20%',
-        left: '10%',
+        top: '15%',
+        right: '20%',
         width: '200px',
         height: '200px',
-        background: 'radial-gradient(circle, rgba(2,255,210,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(2,255,210,0.04) 0%, transparent 70%)',
         borderRadius: '50%',
-        animation: 'float2 8s ease-in-out infinite reverse'
+        animation: 'float1 8s ease-in-out infinite'
       }}></div>
       <div style={{
         position: 'absolute',
-        top: '60%',
-        right: '40%',
+        bottom: '25%',
+        left: '15%',
         width: '150px',
         height: '150px',
-        background: 'radial-gradient(circle, rgba(4,25,36,0.3) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(4,25,36,0.2) 0%, transparent 70%)',
         borderRadius: '50%',
-        animation: 'float1 10s ease-in-out infinite'
+        animation: 'float2 10s ease-in-out infinite reverse'
       }}></div>
 
       <style dangerouslySetInnerHTML={{
@@ -291,12 +281,13 @@ export default function Dashboard() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
         <div style={{ 
           marginBottom: '60px',
-          padding: '60px 40px',
+          padding: '50px 40px',
           background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          border: '1px solid #02FFD2',
+          border: '1px solid rgba(255,255,255,0.15)',
           borderRadius: '12px',
           position: 'relative',
           overflow: 'hidden',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
           animation: 'slideInDown 0.8s ease-out'
         }}>
           <div style={{
@@ -306,7 +297,7 @@ export default function Dashboard() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'radial-gradient(circle at center, rgba(2, 255, 210, 0.1) 0%, transparent 70%)',
+            background: 'radial-gradient(circle at center, rgba(2, 255, 210, 0.03) 0%, transparent 60%)',
             pointerEvents: 'none'
           }}></div>
           {/* Logos Section - Centered */}
@@ -336,7 +327,7 @@ export default function Dashboard() {
               borderRadius: '2px',
               boxShadow: '0 0 10px rgba(2,255,210,0.5)'
             }}></div>
-            <img src="https://luckysea.gg/assets/logotipo.svg" alt="LuckySea" style={{ width: '60px', height: 'auto' }} />
+            <img src="https://luckysea.gg/assets/logotipo.svg" alt="LuckySea" style={{ width: '90px', height: 'auto' }} />
           </div>
           {/* Title Section - Centered */}
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -364,17 +355,17 @@ export default function Dashboard() {
               🌍 All times in UTC timezone
             </div>
           </div>
-          {/* Status and Info Section */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+          {/* Status and Actions Section */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '25px', gap: '20px' }}>
+            {/* Left: Status */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              {/* Online Status Indicator */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ 
                   width: '8px', 
                   height: '8px', 
                   backgroundColor: '#02FFD2', 
                   borderRadius: '50%',
-                  boxShadow: '0 0 10px rgba(2,255,210,0.8)',
+                  boxShadow: '0 0 8px rgba(2,255,210,0.6)',
                   animation: 'pulse 2s infinite'
                 }}></div>
                 <span style={{ color: '#02FFD2', fontSize: '0.9rem', fontWeight: '500' }}>
@@ -382,9 +373,72 @@ export default function Dashboard() {
                 </span>
               </div>
               <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(255,255,255,0.2)' }}></div>
-              <p style={{ color: '#E5E7EB', fontSize: '0.9rem', margin: 0 }}>
+              <span style={{ color: '#E5E7EB', fontSize: '0.9rem' }}>
                 Pre-loaded historical data
-              </p>
+              </span>
+            </div>
+            
+            {/* Right: Action Buttons */}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <a 
+                href="https://blockscout.lisk.com/address/0xf18485f75551FFCa4011C32a0885ea8C22336840?tab=txs" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  backgroundColor: '#02FFD2',
+                  color: '#041924',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#01E5C4';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#02FFD2';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                📈 Live Transactions
+              </a>
+              <a 
+                href="https://blockscout.lisk.com/address/0xf18485f75551FFCa4011C32a0885ea8C22336840?tab=index" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  color: '#E5E7EB',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '0.85rem',
+                  fontWeight: '500',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                🔍 Contract Details
+              </a>
             </div>
             <div style={{ 
               backgroundColor: 'rgba(2,255,210,0.1)', 
@@ -458,26 +512,25 @@ export default function Dashboard() {
           gap: '20px',
           marginBottom: '30px'
         }}>
-          {/* Total Transactions */}
+          {/* Total Transactions - PRIMARY CARD */}
           <div style={{ 
-            background: 'linear-gradient(135deg, rgba(2,255,210,0.15) 0%, rgba(0,255,136,0.05) 100%)',
-            padding: '25px', 
+            background: 'linear-gradient(135deg, rgba(2,255,210,0.08) 0%, rgba(4,25,36,1) 100%)',
+            padding: '28px', 
             borderRadius: '16px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.2), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
+            boxShadow: '0 6px 24px rgba(2,255,210,0.12), inset 0 1px 0 rgba(255,255,255,0.1)', 
+            border: '1px solid rgba(2,255,210,0.4)',
             position: 'relative',
             overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             cursor: 'pointer'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-5px)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(2,255,210,0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
+            e.currentTarget.style.transform = 'translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.2), inset 0 1px 0 rgba(255,255,255,0.15)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(2,255,210,0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
+            e.currentTarget.style.boxShadow = '0 6px 24px rgba(2,255,210,0.12), inset 0 1px 0 rgba(255,255,255,0.1)';
           }}>
             <div style={{
               position: 'absolute',
@@ -491,21 +544,20 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               🎲 Total Transactions
             </h3>
-            <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2.4rem', fontWeight: '700', color: '#02FFD2', position: 'relative' }}>
               {contractData?.totalTransactions?.toLocaleString() || 0}
             </p>
           </div>
 
-          {/* Latest Complete Day Transactions */}
+          {/* Latest Complete Day Transactions - SECONDARY CARD */}
           <div style={{ 
             background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-            padding: '25px', 
+            padding: '24px', 
             borderRadius: '12px', 
-            boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-            border: '1px solid rgba(2,255,210,0.3)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)', 
+            border: '1px solid rgba(255,255,255,0.15)',
             position: 'relative',
             overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
             cursor: 'pointer',
             animation: 'fadeInUp 0.6s ease-out 0.2s both'
@@ -530,7 +582,7 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               📊 {analysis?.latestCompleteDateFormatted || 'Loading...'}
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
               {analysis?.latestDayTxs?.toLocaleString() || 0} transactions
             </p>
             <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
@@ -572,7 +624,7 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               📈 7-Day Period
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
               {analysis?.weeklyTxs?.toLocaleString() || 0} transactions
             </p>
             <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
@@ -614,7 +666,7 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               🗓️ Month Progress
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
               {analysis?.monthlyTxs?.toLocaleString() || 0} transactions
             </p>
             <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
@@ -656,7 +708,7 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               📊 Average per Day
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
               {analysis?.avgTxsPerDay?.toLocaleString() || 0}
             </p>
           </div>
@@ -695,7 +747,7 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               📈 Average per Month
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
               {analysis?.avgTxsPerMonth?.toLocaleString() || 0}
             </p>
           </div>
@@ -734,23 +786,22 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
               🗓️ Total Days Active
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 20px rgba(2,255,210,0.5)', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
               {analysis?.totalDaysActive?.toLocaleString() || 0}
             </p>
           </div>
         </div>
 
-        {/* Hourly Analysis */}
+        {/* Hourly Analysis - TERTIARY CARD */}
         <div style={{ 
           background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          padding: '30px', 
-          borderRadius: '16px', 
-          boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-          border: '1px solid rgba(2,255,210,0.3)',
+          padding: '28px', 
+          borderRadius: '12px', 
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', 
+          border: '1px solid rgba(255,255,255,0.1)',
           marginTop: '30px',
           position: 'relative',
           overflow: 'hidden',
-          backdropFilter: 'blur(10px)',
           animation: 'fadeInUp 0.8s ease-out 0.8s both'
         }}>
           <div style={{
@@ -763,11 +814,10 @@ export default function Dashboard() {
             animation: 'shimmer 4s infinite'
           }}></div>
           <h2 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold', 
+            fontSize: '1.4rem', 
+            fontWeight: '600', 
             marginBottom: '20px', 
-            color: '#02FFD2', 
-            textShadow: '0 0 20px rgba(2,255,210,0.3)',
+            color: '#E5E7EB', 
             position: 'relative'
           }}>📈 Hourly Activity - {analysis?.latestCompleteDateFormatted || 'Loading...'} (UTC)</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '10px' }}>
@@ -784,7 +834,7 @@ export default function Dashboard() {
                   transition: 'all 0.3s ease'
                 }}>
                   <div style={{ fontSize: '0.8rem', color: '#E5E7EB' }}>{hour}h</div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: count > 0 ? '#02FFD2' : '#888', textShadow: count > 0 ? '0 0 10px rgba(2,255,210,0.5)' : 'none' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '600', color: count > 0 ? '#02FFD2' : '#888' }}>
                     {count}
                   </div>
                 </div>
@@ -793,17 +843,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Daily Analysis */}
+        {/* Daily Analysis - TERTIARY CARD */}
         <div style={{ 
           background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          padding: '30px', 
-          borderRadius: '16px', 
-          boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-          border: '1px solid rgba(2,255,210,0.3)',
+          padding: '28px', 
+          borderRadius: '12px', 
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', 
+          border: '1px solid rgba(255,255,255,0.1)',
           marginTop: '30px',
           position: 'relative',
           overflow: 'hidden',
-          backdropFilter: 'blur(10px)',
           animation: 'fadeInUp 0.8s ease-out 0.9s both'
         }}>
           <div style={{
@@ -865,7 +914,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: '0.9rem', color: '#E5E7EB', marginBottom: '5px' }}>
                       {new Date(date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: '2-digit' })}
                     </div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#02FFD2', textShadow: '0 0 15px rgba(2,255,210,0.5)' }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#02FFD2' }}>
                       {count.toLocaleString()}
                     </div>
                   </div>
@@ -874,17 +923,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Monthly Breakdown */}
+        {/* Monthly Breakdown - TERTIARY CARD */}
         <div style={{ 
           background: 'linear-gradient(135deg, #041924 0%, #052738 100%)',
-          padding: '30px', 
-          borderRadius: '16px', 
-          boxShadow: '0 8px 32px rgba(2,255,210,0.15), inset 0 1px 0 rgba(255,255,255,0.1)', 
-          border: '1px solid rgba(2,255,210,0.3)',
+          padding: '28px', 
+          borderRadius: '12px', 
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', 
+          border: '1px solid rgba(255,255,255,0.1)',
           marginTop: '30px',
           position: 'relative',
           overflow: 'hidden',
-          backdropFilter: 'blur(10px)',
           animation: 'fadeInUp 0.8s ease-out 1s both'
         }}>
           <div style={{
@@ -946,7 +994,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: '1rem', color: '#E5E7EB', marginBottom: '8px' }}>
                       {new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#02FFD2', marginBottom: '5px', textShadow: '0 0 20px rgba(2,255,210,0.5)' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', marginBottom: '5px' }}>
                       {count.toLocaleString()}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: '#E5E7EB' }}>transactions</div>

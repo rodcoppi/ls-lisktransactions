@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import HourlyBarChart from "../components/HourlyBarChart";
 
 interface ContractAnalysis {
   // Precise date-based data
@@ -350,32 +351,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Hourly Activity */}
-        <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-8 rounded-xl shadow-xl border border-white/10 mb-8 animate-fade-up delay-700">
-          <h2 className="text-2xl font-semibold mb-6 text-gray-200">
-            📈 Hourly Activity - {analysis?.latestCompleteDateFormatted || 'Loading...'} (UTC)
-          </h2>
-          <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-12 xl:grid-cols-24 gap-2">
-            {Array.from({ length: 24 }, (_, hour) => {
-              const count = analysis?.hourlyData?.[hour] || 0;
-              return (
-                <div 
-                  key={hour} 
-                  className={`text-center p-3 rounded-lg transition-all hover:scale-105 ${
-                    count > 0 
-                      ? 'bg-emerald-400/20 border border-emerald-400 shadow-emerald-400/20 shadow-md' 
-                      : 'bg-white/5 border border-white/10'
-                  }`}
-                >
-                  <div className="text-xs text-gray-400">{hour}h</div>
-                  <div className={`text-sm font-semibold ${count > 0 ? 'text-emerald-400' : 'text-gray-600'}`}>
-                    {count}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Hourly Activity - New Bar Chart */}
+        {analysis && (
+          <HourlyBarChart
+            hourlyData={analysis.hourlyData}
+            date={analysis.latestCompleteDate || ''}
+            dateFormatted={analysis.latestCompleteDateFormatted || ''}
+            totalTx={analysis.latestDayTxs || 0}
+          />
+        )}
 
         {/* Daily Breakdown */}
         <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-8 rounded-xl shadow-xl border border-white/10 mb-8 animate-fade-up delay-800">

@@ -1,24 +1,24 @@
 {
   "schemaVersion": "1.2.0",
-  "generatedAtUTC": "2025-08-09T04:58:17.586Z",
+  "generatedAtUTC": "2025-08-09T05:19:04.755Z",
   "source": "migrated-from-v1",
-  "integrity": "sha256:847f33e46da316972ccee8e9bcb564a50680ee9e8d56d3e861769be2da61f0ac",
+  "integrity": "sha256:6463a1c92c0cdd46bd92b8cb0e62a6d141d4a4d79bc72b161a1551fb649afd81",
   "dailyTotals": {
     "2025-08-05": 7436,
     "2025-08-04": 3,
     "2025-08-06": 9357,
     "2025-08-07": 7639,
-    "2025-08-08": 407
+    "2025-08-08": 6241
   },
   "dailyStatus": {
     "2025-08-05": "complete",
     "2025-08-04": "complete",
     "2025-08-06": "complete",
     "2025-08-07": "complete",
-    "2025-08-08": "partial"
+    "2025-08-08": "complete"
   },
   "monthlyTotals": {
-    "2025-08": 24842
+    "2025-08": 30676
   },
   "recentHourly": {
     "2025-08-05": [
@@ -126,30 +126,30 @@
       153
     ],
     "2025-08-08": [
-      134,
-      22,
-      251,
       0,
       0,
       0,
       0,
+      983,
+      57,
+      45,
+      222,
       0,
+      9,
       0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
+      755,
+      12,
+      57,
+      81,
+      45,
+      808,
+      33,
+      11,
+      607,
+      954,
+      538,
+      800,
+      224
     ]
   },
   "cursor": {
@@ -157,7 +157,7 @@
     "lastTxIndex": 0,
     "lastTxHash": ""
   },
-  "lastUpdate": "2025-08-08T21:05:43.774Z",
-  "totalTransactions": 24842,
+  "lastUpdate": "2025-08-09T05:19:04.755Z",
+  "totalTransactions": 30676,
   "totalDaysActive": 5
 }

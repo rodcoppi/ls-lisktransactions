@@ -198,8 +198,8 @@ export default function Dashboard() {
       
       <div className="max-w-6xl mx-auto p-6 relative z-10">
         {/* Header */}
-        <div className="mb-12 p-12 bg-gradient-to-br from-[#041924] to-[#052738] border border-white/15 rounded-xl relative overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-radial from-emerald-400/3 to-transparent pointer-events-none"></div>
+        <div className="mb-12 p-12 bg-slate-800 border border-gray-600 rounded-xl">
+          <div></div>
           
           {/* Logos */}
           <div className="flex items-center justify-center gap-6 mb-6 relative z-20">
@@ -223,7 +223,7 @@ export default function Dashboard() {
           
           {/* Title */}
           <div className="text-center mb-6">
-            <h1 className="text-4xl font-bold text-white mb-3 text-shadow-emerald animate-fade-in">
+            <h1 className="text-4xl font-bold text-white mb-3">
               LuckySea Analytics Dashboard
             </h1>
             <div className="inline-block bg-emerald-400/20 border border-emerald-400/50 rounded-full px-4 py-1 text-sm text-emerald-400 font-medium">
@@ -235,7 +235,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-emerald-400/50 shadow-sm"></div>
+                <div className="w-2 h-2 bg-emerald-400 rounded-full shadow-emerald-400/50 shadow-sm"></div>
                 <span className="text-emerald-400 text-sm font-medium">System Online</span>
               </div>
               <div className="w-px h-4 bg-white/20"></div>

@@ -449,7 +449,7 @@ export default function Dashboard() {
               <p style={{ color: '#02FFD2', fontSize: '0.9rem', fontWeight: '500', margin: 0 }}>
                 📊 Last updated: {contractData?.lastUpdate ? getTimeAgo(contractData.lastUpdate) : 'Loading...'}
               </p>
-              <p style={{ color: 'rgba(2,255,210,0.7)', fontSize: '0.8rem', margin: '4px 0 0 0' }}>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: '4px 0 0 0' }}>
                 Historical data • Daily snapshots at 00:00 UTC
               </p>
             </div>
@@ -541,7 +541,7 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               🎲 Total Transactions
             </h3>
             <p style={{ fontSize: '2.4rem', fontWeight: '700', color: '#02FFD2', position: 'relative' }}>
@@ -579,13 +579,13 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite 1s'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               📊 {analysis?.latestCompleteDateFormatted || 'Loading...'}
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
               {analysis?.latestDayTxs?.toLocaleString() || 0} transactions
             </p>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', position: 'relative' }}>
               Complete 24h data
             </p>
           </div>
@@ -621,13 +621,13 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite 1.5s'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               📈 7-Day Period
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
               {analysis?.weeklyTxs?.toLocaleString() || 0} transactions
             </p>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', position: 'relative' }}>
               {analysis?.weeklyPeriod || 'Loading period...'}
             </p>
           </div>
@@ -663,13 +663,13 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite 2s'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               🗓️ Month Progress
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
               {analysis?.monthlyTxs?.toLocaleString() || 0} transactions
             </p>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(2,255,210,0.6)', marginTop: '8px', position: 'relative' }}>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', position: 'relative' }}>
               {analysis?.monthlyPeriod || 'Loading period...'}
             </p>
           </div>
@@ -705,7 +705,7 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite 2.5s'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               📊 Average per Day
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
@@ -744,7 +744,7 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite 3s'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               📈 Average per Month
             </h3>
             <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
@@ -783,10 +783,10 @@ export default function Dashboard() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
               animation: 'shimmer 3s infinite 3.5s'
             }}></div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'rgba(2,255,210,0.8)', marginBottom: '10px', position: 'relative' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#ffffff', marginBottom: '10px', position: 'relative' }}>
               🗓️ Total Days Active
             </h3>
-            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#02FFD2', position: 'relative' }}>
+            <p style={{ fontSize: '2rem', fontWeight: '600', color: '#ffffff', position: 'relative' }}>
               {analysis?.totalDaysActive?.toLocaleString() || 0}
             </p>
           </div>
@@ -888,10 +888,13 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              Object.entries(analysis?.dailyData || {})
-                .sort(([a], [b]) => b.localeCompare(a))
-                .slice(0, 7)
-                .map(([date, count]) => (
+              (() => {
+                const dailyEntries = Object.entries(analysis?.dailyData || {});
+                console.log('🔍 Daily data debug:', dailyEntries);
+                return dailyEntries
+                  .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                  .slice(0, 7);
+              })().map(([date, count]) => (
                   <div key={date} style={{ 
                     minWidth: '120px', 
                     textAlign: 'center', 
@@ -912,7 +915,7 @@ export default function Dashboard() {
                     e.currentTarget.style.boxShadow = '0 4px 20px rgba(2,255,210,0.2)';
                   }}>
                     <div style={{ fontSize: '0.9rem', color: '#E5E7EB', marginBottom: '5px' }}>
-                      {new Date(date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: '2-digit' })}
+                      {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })}
                     </div>
                     <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#02FFD2' }}>
                       {count.toLocaleString()}

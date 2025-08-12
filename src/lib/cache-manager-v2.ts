@@ -575,7 +575,7 @@ export class CacheManagerV2 {
     
     // CRITICAL: Merge with new hourlyData structure for complete coverage
     Object.keys(cache.hourlyData || {}).forEach(date => {
-      if (!recentHourly[date]) {
+      if (!recentHourly[date] && cache.hourlyData?.[date]) {
         recentHourly[date] = cache.hourlyData[date];
       }
     });

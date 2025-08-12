@@ -114,6 +114,10 @@ export class HistoricalDataManager {
     const dailyStatus = currentData.analysis.dailyStatus || {};
     const recentHourly = currentData.analysis.recentHourly || {};
     
+    // CRITICAL: Also get new hourlyData structure from cache V2
+    const cache = require('./cache-manager-v2').cacheManagerV2.loadCacheV2();
+    const newHourlyData = cache?.hourlyData || {};
+    
     const start = new Date(startDate);
     const end = new Date(endDate);
     
@@ -121,11 +125,21 @@ export class HistoricalDataManager {
       const dateStr = d.toISOString().split('T')[0];
       
       if (dailyData[dateStr]) {
+        // Priority: use newHourlyData first, then recentHourly as fallback
+        let dayHourlyData = {};
+        if (newHourlyData[dateStr]) {
+          // Use new hourlyData structure (object with hour keys)
+          dayHourlyData = newHourlyData[dateStr];
+        } else if (recentHourly[dateStr]) {
+          // Use legacy recentHourly structure (array with hour indices)  
+          dayHourlyData = recentHourly[dateStr];
+        }
+        
         const snapshot: DailySnapshot = {
           date: dateStr,
           totalTransactions: currentData.totalTransactions || 0,
           dailyCount: dailyData[dateStr],
-          hourlyData: recentHourly[dateStr] || {},
+          hourlyData: dayHourlyData,
           timestamp: `${dateStr}T23:59:59.000Z`,
           weeklyTotal: currentData.analysis.weeklyTxs || 0,
           monthlyTotal: currentData.analysis.monthlyTxs || 0,

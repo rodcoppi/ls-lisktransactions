@@ -543,10 +543,18 @@ export class CacheManagerV2 {
     const monthlyPeriod = monthlyPeriodUTC(latestCompleteDate);
 
     // Get hourly data for latest complete date
+    // Check both recentHourly (legacy) and hourlyData (new structure)
     const hourlyArray = cache.recentHourly[latestCompleteDate];
-    const hourlyData = hourlyArray 
-      ? Object.fromEntries(hourlyArray.map((count, hour) => [hour, count]))
-      : {};
+    const newHourlyData = cache.hourlyData?.[latestCompleteDate];
+    
+    let hourlyData = {};
+    if (newHourlyData) {
+      // Use new hourlyData structure (object with hour keys)
+      hourlyData = newHourlyData;
+    } else if (hourlyArray) {
+      // Use legacy recentHourly structure (array with hour indices)
+      hourlyData = Object.fromEntries(hourlyArray.map((count, hour) => [hour, count]));
+    }
 
     console.log('📊 Analysis V2 generated:', {
       latestCompleteDate,
@@ -563,6 +571,13 @@ export class CacheManagerV2 {
       recentHourly[date] = hourlyArray 
         ? Object.fromEntries(hourlyArray.map((count, hour) => [hour, count]))
         : {};
+    });
+    
+    // CRITICAL: Merge with new hourlyData structure for complete coverage
+    Object.keys(cache.hourlyData || {}).forEach(date => {
+      if (!recentHourly[date]) {
+        recentHourly[date] = cache.hourlyData[date];
+      }
     });
 
     return {

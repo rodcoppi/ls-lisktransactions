@@ -61,14 +61,21 @@ export class CacheManagerV2 {
     }
   }
 
+  private forceColdStart: boolean = false;
+  
   private async updateCache(): Promise<void> {
     try {
       console.log('🔄 Starting cache update with V2 logic...');
       
       const existingCache = this.loadCacheV2();
       
-      if (!existingCache) {
-        console.log('❄️ Cold start - fetching all transactions...');
+      if (!existingCache || this.forceColdStart) {
+        if (this.forceColdStart) {
+          console.log('🔥 FORCED COLD START - rebuilding entire cache...');
+          this.forceColdStart = false; // Reset flag
+        } else {
+          console.log('❄️ Cold start - fetching all transactions...');
+        }
         await this.fullCacheUpdate();
       } else {
         console.log('⚡ Incremental update - fetching new transactions...');
@@ -505,6 +512,11 @@ export class CacheManagerV2 {
         hourlyData: {},
         dailyData: cache.dailyTotals || {},
         monthlyData: cache.monthlyTotals || {},
+        
+        // Extended data for new components (empty fallbacks)
+        recentHourly: {},
+        dailyStatus: {},
+        
         todayTxs: 0,
         thisWeekTxs: 0,
         thisMonthTxs: 0,
@@ -544,6 +556,15 @@ export class CacheManagerV2 {
       avgTxsPerDay: monthlyData.avgPerCompleteDay
     });
 
+    // Format recentHourly as objects for new components
+    const recentHourly: { [date: string]: { [hour: number]: number } } = {};
+    Object.keys(cache.recentHourly || {}).forEach(date => {
+      const hourlyArray = cache.recentHourly[date];
+      recentHourly[date] = hourlyArray 
+        ? Object.fromEntries(hourlyArray.map((count, hour) => [hour, count]))
+        : {};
+    });
+
     return {
       latestCompleteDate,
       latestCompleteDateFormatted,
@@ -557,6 +578,10 @@ export class CacheManagerV2 {
       hourlyData,
       dailyData: cache.dailyTotals || {},
       monthlyData: cache.monthlyTotals || {},
+      
+      // Extended data for new components
+      recentHourly,
+      dailyStatus: cache.dailyStatus || {},
       
       // Legacy compatibility
       todayTxs: latestDayTxs,
@@ -578,6 +603,111 @@ export class CacheManagerV2 {
 
   public async forceUpdate(): Promise<void> {
     await this.updateCache();
+  }
+  
+  public async clearCache(): Promise<void> {
+    try {
+      console.log('🧹 Clearing cache to force complete rebuild...');
+      this.forceColdStart = true;
+      console.log('🔄 Next update will ignore existing cache and rebuild from scratch');
+    } catch (error) {
+      console.warn('⚠️ Cache clear warning:', error);
+    }
+  }
+
+  /**
+   * PROTEÇÃO: Detecta gaps de transações e força re-sincronização
+   * Protege contra casos onde a blockchain não salva transações temporariamente
+   */
+  public detectGapsAndResync(): { hasGaps: boolean; gapDetails: string[] } {
+    const cache = this.loadCacheV2();
+    if (!cache || !cache.dailyTotals) {
+      return { hasGaps: false, gapDetails: [] };
+    }
+
+    const gapDetails: string[] = [];
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Encontrar o último dia com dados
+    const allDays = Object.keys(cache.dailyTotals).sort();
+    const lastDayWithData = allDays[allDays.length - 1];
+    
+    if (!lastDayWithData) {
+      gapDetails.push(`❌ Nenhum dado diário encontrado no cache`);
+      return { hasGaps: true, gapDetails };
+    }
+    
+    // Verificar quantos dias se passaram desde o último update
+    const lastDate = new Date(lastDayWithData);
+    const todayDate = new Date(today);
+    const daysDiff = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    console.log(`📅 Último dia com dados: ${lastDayWithData}`);
+    console.log(`📅 Hoje: ${today}`);
+    console.log(`📅 Diferença: ${daysDiff} dias`);
+    
+    // Se passou mais de 1 dia, há gap crítico
+    if (daysDiff > 1) {
+      gapDetails.push(`🚨 GAP CRÍTICO: ${daysDiff} dias sem dados (último: ${lastDayWithData})`);
+    }
+    
+    // Verificar os últimos 7 dias para gaps específicos
+    const recentDays = Object.keys(cache.dailyTotals)
+      .sort()
+      .slice(-7);
+    
+    recentDays.forEach(date => {
+      const dayTxs = cache.dailyTotals[date] || 0;
+      
+      // Se um dia tem 0 transações, pode ser gap da blockchain
+      if (dayTxs === 0 && date < today) {
+        gapDetails.push(`⚠️ ${date}: 0 transações (possível gap da blockchain)`);
+      }
+      
+      // Se um dia tem muito poucas transações comparado ao normal
+      if (dayTxs > 0 && dayTxs < 10 && date < today) {
+        gapDetails.push(`⚠️ ${date}: Apenas ${dayTxs} transações (suspeito)`);
+      }
+    });
+
+    const hasGaps = gapDetails.length > 0;
+
+    if (hasGaps) {
+      console.log(`🚨 PROTEÇÃO: Gaps detectados (${gapDetails.length}):`);
+      gapDetails.forEach(gap => console.log(gap));
+    } else {
+      console.log(`✅ PROTEÇÃO: Nenhum gap detectado nos dados recentes`);
+    }
+
+    return { hasGaps, gapDetails };
+  }
+
+  /**
+   * PROTEÇÃO: Executa verificação automática e re-sincronização se necessário
+   */
+  public async autoProtectAgainstGaps(): Promise<boolean> {
+    console.log(`🛡️ PROTEÇÃO V2: Verificando gaps automaticamente...`);
+    
+    const gapCheck = this.detectGapsAndResync();
+    
+    if (gapCheck.hasGaps) {
+      console.log(`🔥 PROTEÇÃO V2 ATIVADA: Gaps detectados, forçando re-sincronização...`);
+      console.log(`📋 Problemas encontrados:`);
+      gapCheck.gapDetails.forEach(detail => console.log(`   ${detail}`));
+      
+      try {
+        this.forceColdStart = true;
+        await this.updateCache();
+        console.log(`✅ PROTEÇÃO V2: Re-sincronização completa realizada com sucesso`);
+        return true;
+      } catch (error) {
+        console.error(`❌ PROTEÇÃO V2: Falha na re-sincronização:`, error);
+        return false;
+      }
+    } else {
+      console.log(`✅ PROTEÇÃO V2: Dados íntegros, nenhuma re-sincronização necessária`);
+      return false;
+    }
   }
 
   public destroy(): void {

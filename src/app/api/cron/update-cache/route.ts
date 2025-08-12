@@ -1,30 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cacheManagerV2 } from '@/lib/cache-manager-v2';
+import { HistoricalDataManager } from '@/lib/historical-data-manager';
 
 // 🎲 LuckySea Analytics - Daily Cache Update Cron Job
 // Runs at 00:00 UTC daily to fetch new transactions
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔄 Cron job started: Daily cache update');
+    console.log('🔄 Cron job started: Daily cache update com PROTEÇÃO V2');
     
-    // Basic security check (optional)
-    const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      console.log('🚫 Unauthorized cron request');
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // STEP 1: Executar proteção automática contra gaps
+    const protectionActivated = await cacheManagerV2.autoProtectAgainstGaps();
+    
+    // STEP 2: Se não houve proteção, executar update normal
+    if (!protectionActivated) {
+      await cacheManagerV2.forceUpdate();
     }
     
-    // Force cache update using V2
-    await cacheManagerV2.forceUpdate();
+    // Save historical snapshot
+    try {
+      const contractData = cacheManagerV2.getCachedData();
+      if (contractData) {
+        await HistoricalDataManager.saveDailySnapshot(contractData);
+        console.log('📊 Historical data snapshot saved');
+      }
+    } catch (histError) {
+      console.error('⚠️ Failed to save historical data:', histError);
+      // Don't fail the cron job if historical save fails
+    }
     
     console.log('✅ Cron job completed successfully');
     
     return NextResponse.json({
       success: true,
-      message: 'Cache updated successfully',
+      message: protectionActivated 
+        ? 'CRON V2: Proteção anti-gap ativada - Re-sync completa realizada'
+        : 'CRON V2: Update diário normal completado',
+      protection_activated: protectionActivated,
       timestamp: new Date().toISOString()
     });
     

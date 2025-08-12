@@ -11,6 +11,7 @@ export interface OptimizedCacheV2 {
   dailyStatus: Record<string, DayStatus>;
   monthlyTotals: Record<string, number>;
   recentHourly: Record<string, number[]>; // Always 24 slots
+  hourlyData?: Record<string, Record<number, number>>; // New structure: date -> hour -> count
   
   // Cursor for robust pagination
   cursor: { 

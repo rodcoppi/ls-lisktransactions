@@ -1,4 +1,4 @@
-```yaml
+
 name: Daily Cache Update
 
 on:
@@ -29,4 +29,4 @@ jobs:
             echo "❌ Update failed"
             exit 1
           fi
-```
+

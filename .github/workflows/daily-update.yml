@@ -1,20 +1,18 @@
-name: Daily Cache Update
+  name: Daily Cache Update
 
   on:
     schedule:
-      # Runs at 00:05 UTC every day (5 minutes after midnight)
       - cron: '5 0 * * *'
-    workflow_dispatch: # Allows manual triggering for testing
+    workflow_dispatch:
 
   jobs:
     update-cache:
       runs-on: ubuntu-latest
 
       steps:
-        - name: 🔄 Trigger Daily Cache Update
+        - name: Update LuckySea Cache
           run: |
-            echo "🚀 Starting daily cache update for LuckySea Analytics..."
-            echo "⏰ Scheduled time: $(date -u)"
+            echo "Starting daily cache update..."
 
             response=$(curl -s -w "%{http_code}" \
               -X POST \
@@ -25,23 +23,18 @@ name: Daily Cache Update
             http_code="${response: -3}"
             response_body="${response%???}"
 
-            echo "📡 HTTP Status: $http_code"
-            echo "📋 Response: $response_body"
+            echo "HTTP Status: $http_code"
+            echo "Response: $response_body"
 
             if [ "$http_code" = "200" ]; then
-              echo "✅ Daily cache update completed successfully!"
+              echo "✅ Update completed successfully!"
             else
-              echo "❌ Daily cache update failed with status $http_code"
-              echo "Response: $response_body"
+              echo "❌ Update failed with status $http_code"
               exit 1
             fi
 
-        - name: 📊 Log Update Summary
+        - name: Log Summary
           run: |
-            echo "📈 LuckySea Analytics Cache Update Summary"
-            echo "========================================="
-            echo "🕐 Execution Time: $(date -u)"
-            echo "🌍 Timezone: UTC"
-            echo "🎯 Target: LuckySea Lisk Contract Analytics"
-            echo "🔗 Dashboard: https://luckysea-lisk-analytics.vercel.app"
-            echo "✨ Next update: Tomorrow at 00:05 UTC"
+            echo "LuckySea Analytics Updated"
+            echo "Time: $(date -u)"
+            echo "Next update: Tomorrow at 00:05 UTC"

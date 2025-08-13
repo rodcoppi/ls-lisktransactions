@@ -18,15 +18,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    console.log('🔄 AUTO-UPDATE: Daily cache update started');
+    console.log('🔄 AUTO-UPDATE: Quick daily update started');
     
-    // STEP 1: Execute gap protection
-    const protectionActivated = await cacheManagerV2.autoProtectAgainstGaps();
-    
-    // STEP 2: If no protection needed, do normal update
-    if (!protectionActivated) {
-      await cacheManagerV2.forceUpdate();
-    }
+    // Quick update - just fetch latest transactions (no full resync)
+    await cacheManagerV2.forceUpdate();
     
     // STEP 3: Save historical snapshot
     try {
@@ -44,10 +39,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      message: protectionActivated 
-        ? 'AUTO-UPDATE: Gap protection activated - Full resync completed'
-        : 'AUTO-UPDATE: Normal daily update completed',
-      protection_activated: protectionActivated,
+      message: 'AUTO-UPDATE: Quick daily update completed',
       timestamp: new Date().toISOString(),
       trigger: 'github-actions'
     });

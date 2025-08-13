@@ -168,65 +168,9 @@ export default function Dashboard() {
   useEffect(() => {
     const abortController = new AbortController();
     
-    // Auto-Recovery System: Check if we missed a daily snapshot
-    const checkMissedSnapshot = async () => {
-      if (!isProduction) return; // Only in production
-      
-      const nowUTC = new Date();
-      const todayUTCKey = nowUTC.toISOString().split('T')[0];
-      const currentUTCHour = nowUTC.getUTCHours();
-      const currentUTCMinute = nowUTC.getUTCMinutes();
-      const minutesSinceMidnight = (currentUTCHour * 60) + currentUTCMinute;
-      
-      // After 00:30 UTC, check if today's snapshot exists
-      if (minutesSinceMidnight > 30) {
-        try {
-          console.log('🔍 Auto-recovery: Checking for today\'s snapshot...');
-          const histResponse = await fetch(`/api/historical-data?date=${todayUTCKey}`);
-          
-          if (histResponse.ok) {
-            const histData = await histResponse.json();
-            if (!histData.data || histData.data.length === 0) {
-              console.log('🚨 MISSING SNAPSHOT DETECTED! Triggering emergency update...');
-              
-              // Try to force cron execution
-              try {
-                const cronResponse = await fetch('/api/cron/update-cache', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' }
-                });
-                
-                if (cronResponse.ok) {
-                  console.log('✅ Emergency snapshot update triggered successfully!');
-                  setFetchProgress('🔄 Updating missing daily snapshot...');
-                  // Wait a bit for the snapshot to be saved, then refetch
-                  setTimeout(() => {
-                    setFetchProgress(null);
-                    initData(); // Refetch data
-                  }, 8000);
-                  return true; // Indicate recovery was attempted
-                } else {
-                  console.warn('⚠️ Emergency update request failed, continuing with existing data');
-                }
-              } catch (cronError) {
-                console.warn('⚠️ Emergency update failed:', cronError);
-              }
-            } else {
-              console.log('✅ Today\'s snapshot exists, no recovery needed');
-            }
-          }
-        } catch (checkError) {
-          console.warn('⚠️ Auto-recovery check failed:', checkError);
-        }
-      }
-      return false;
-    };
+    // Note: Auto-recovery removed - now handled by GitHub Actions daily at 00:05 UTC
     
     const initData = async () => {
-      // Run auto-recovery check first
-      const recoveryAttempted = await checkMissedSnapshot();
-      if (recoveryAttempted) return; // Let recovery handle the data fetch
-      
       const result = await fetchData(abortController.signal);
       
       // Only start polling in development if data is not ready
@@ -387,7 +331,7 @@ export default function Dashboard() {
                 📊 {getLastUpdateTime(contractData)}
               </p>
               <p className="text-gray-400 text-xs mt-1">
-                Historical data • {isProduction ? 'Daily snapshots at 00:00 UTC' : 'Continuous updates in dev mode'}
+                Historical data • {isProduction ? 'Auto-updated daily at 00:05 UTC via GitHub Actions' : 'Continuous updates in dev mode'}
               </p>
             </div>
           </div>

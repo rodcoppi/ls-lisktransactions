@@ -20,7 +20,7 @@ name: Daily Cache Update
               -X POST \
               -H "Authorization: Bearer ${{ secrets.AUTO_UPDATE_TOKEN }}" \
               -H "Content-Type: application/json" \
-              https://luckysea-lisk-analytics-kca5sbrrx-rodcoppis-projects.vercel.app/api/auto-update)
+              https://luckysea-lisk-analytics.vercel.app/api/auto-update)
 
             http_code="${response: -3}"
             response_body="${response%???}"
@@ -43,5 +43,62 @@ name: Daily Cache Update
             echo "🕐 Execution Time: $(date -u)"
             echo "🌍 Timezone: UTC"
             echo "🎯 Target: LuckySea Lisk Contract Analytics"
-            echo "🔗 Dashboard: https://luckysea-lisk-analytics-kca5sbrrx-rodcoppis-projects.vercel.app"
+            echo "🔗 Dashboard: https://luckysea-lisk-analytics.vercel.app"
             echo "✨ Next update: Tomorrow at 00:05 UTC"
+
+  📝 PASSOS:
+  1. GitHub → Actions → New workflow → set up a workflow yourself
+  2. Cole o código acima
+  3. Salve como daily-update.yml
+  4. Commit
+  5. Teste com "Run workflow"
+
+  O domínio .vercel.app é o correto e permanente! 🎯
+
+> cara asgora ja criei esse: name: Daily Cache Update
+
+    on:
+      schedule:
+        # Runs at 00:05 UTC every day (5 minutes after midnight)
+        - cron: '5 0 * * *'
+      workflow_dispatch: # Allows manual triggering for testing
+
+    jobs:
+      update-cache:
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: 🔄 Trigger Daily Cache Update
+            run: |
+              echo "🚀 Starting daily cache update for LuckySea Analytics..."
+              echo "⏰ Scheduled time: $(date -u)"
+
+              response=$(curl -s -w "%{http_code}" \
+                -X POST \
+                -H "Authorization: Bearer ${{ secrets.AUTO_UPDATE_TOKEN }}" \
+                -H "Content-Type: application/json" \
+                https://luckysea-lisk-analytics-kca5sbrrx-rodcoppis-projects.vercel.app/api/auto-update)
+
+              http_code="${response: -3}"
+              response_body="${response%???}"
+
+              echo "📡 HTTP Status: $http_code"
+              echo "📋 Response: $response_body"
+
+              if [ "$http_code" = "200" ]; then
+                echo "✅ Daily cache update completed successfully!"
+              else
+                echo "❌ Daily cache update failed with status $http_code"
+                echo "Response: $response_body"
+                exit 1
+              fi
+
+          - name: 📊 Log Update Summary
+            run: |
+              echo "📈 LuckySea Analytics Cache Update Summary"
+              echo "========================================="
+              echo "🕐 Execution Time: $(date -u)"
+              echo "🌍 Timezone: UTC"
+              echo "🎯 Target: LuckySea Lisk Contract Analytics"
+              echo "🔗 Dashboard: https://luckysea-lisk-analytics-kca5sbrrx-rodcoppis-projects.vercel.app"
+              echo "✨ Next update: Tomorrow at 00:05 UTC"

@@ -44,9 +44,9 @@ export async function GET(request: NextRequest) {
         },
         comparison: {
           cursorBlock: cache?.cursor?.lastBlockNumber,
-          latestBlock: latestTx?.block,
-          blockGap: latestTx?.block - (cache?.cursor?.lastBlockNumber || 0),
-          shouldHaveNewData: latestTx?.block > (cache?.cursor?.lastBlockNumber || 0)
+          latestBlock: latestTx?.block_number,
+          blockGap: latestTx?.block_number - (cache?.cursor?.lastBlockNumber || 0),
+          shouldHaveNewData: latestTx?.block_number > (cache?.cursor?.lastBlockNumber || 0)
         }
       }
     });

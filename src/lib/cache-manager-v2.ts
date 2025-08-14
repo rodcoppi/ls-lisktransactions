@@ -493,7 +493,7 @@ export class CacheManagerV2 {
         console.log(`💾 Cache V2 saved to persistent location: ${saveFile} (${data.totalTransactions} transactions)`);
       } catch (persistentError) {
         // Fallback to temp location if persistent fails
-        console.warn('⚠️ Persistent save failed, using temp fallback:', persistentError.message);
+        console.warn('⚠️ Persistent save failed, using temp fallback:', persistentError instanceof Error ? persistentError.message : String(persistentError));
         saveFile = TEMP_CACHE;
         const dir = path.dirname(saveFile);
         if (!fs.existsSync(dir)) {

@@ -1,5 +1,5 @@
 import type { OptimizedCacheV2, DayStatus, Transaction } from './types';
-import { toUTCDateKey, addUTCDays } from './types';
+import { toUTCDateKey, addUTCDays, startOfUTCDay } from './types';
 
 /**
  * Normalize transaction status to boolean
@@ -66,11 +66,8 @@ export function recomputeDayStatus(
  * ULTRA-FIX: Always returns the most current data available for dashboard display
  */
 export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): string | null {
-  const todayKey = toUTCDateKey(nowUTC);
-  let latestWithAnyData: string | null = null;
-  
-  // FORCE VERCEL REBUILD - ULTRA-FIX ACTIVE v5 - DEFINITIVE FIX
-  console.log('🔥 ULTRA-FIX: findLatestCompleteDate running with new logic v5 - PRIORITIZE RECENT DATA');
+  // FORCE VERCEL REBUILD - ULTRA-FIX ACTIVE v6 - BUILD FIX
+  console.log('🔥 ULTRA-FIX: findLatestCompleteDate running with new logic v6 - BUILD FIXED');
   
   // ULTRA-FIX: Always prioritize most recent data over "complete" status
   // Check last 14 days including today for ANY data

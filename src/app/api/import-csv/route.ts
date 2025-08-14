@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
     const dia12Path = path.join(process.cwd(), 'dia12.csv');
     const dia13Path = path.join(process.cwd(), 'dia13.csv');
     
-    let allTransactions: Transaction[] = [];
-    let importResults = {
+    const allTransactions: Transaction[] = [];
+    const importResults = {
       dia12: 0,
       dia13: 0,
       total: 0,

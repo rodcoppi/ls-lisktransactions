@@ -150,7 +150,7 @@ async function updateFromCSVs() {
     const dia12Path = path.join(process.cwd(), 'dia12.csv');
     const dia13Path = path.join(process.cwd(), 'dia13.csv');
     
-    let allTransactions: Transaction[] = [];
+    const allTransactions: Transaction[] = [];
     
     if (fs.existsSync(dia12Path)) {
       console.log('📄 Reading dia12.csv...');

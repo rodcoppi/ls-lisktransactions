@@ -1,0 +1,28 @@
+name: Daily Cache Update
+
+on:
+  schedule:
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-cache:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Update Cache
+        run: |
+          echo "Starting daily cache update..."
+          response=$(curl -s -w "%{http_code}" \
+            -X GET \
+            https://luckysea-lisk-analytics-acx5ixwec-rodcoppis-projects.vercel.app/api/force-update)
+          http_code="${response: -3}"
+          response_body="${response%???}"
+          echo "HTTP Status: $http_code"
+          echo "Response: $response_body"
+          if [ "$http_code" = "200" ]; then
+            echo "✅ Update completed successfully!"
+          else
+            echo "❌ Update failed"
+            exit 1
+          fi

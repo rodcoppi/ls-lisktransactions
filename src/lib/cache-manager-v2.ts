@@ -154,6 +154,9 @@ export class CacheManagerV2 {
   private async incrementalUpdate(existingCache: OptimizedCacheV2): Promise<void> {
     const nowUTC = new Date();
     
+    // ENSURE YESTERDAY EXISTS: Dashboard must always show yesterday
+    await this.ensureYesterdayExists(existingCache, nowUTC);
+    
     // SMART BATCH STRATEGY: Process missing complete days first
     const missingDays = findMissingDays(existingCache, nowUTC);
     
@@ -165,6 +168,49 @@ export class CacheManagerV2 {
     // Then handle current day updates (lightweight)
     console.log(`⚡ Processing current day updates...`);
     await this.processCurrentDayUpdates(existingCache);
+  }
+
+  /**
+   * Ensure yesterday always exists in cache (even with 0 transactions)
+   * Dashboard must always show yesterday's data
+   */
+  private async ensureYesterdayExists(cache: OptimizedCacheV2, nowUTC: Date): Promise<void> {
+    const yesterday = addUTCDays(nowUTC, -1);
+    const yesterdayKey = toUTCDateKey(yesterday);
+    
+    // Check if yesterday exists in cache
+    if (cache.dailyTotals.hasOwnProperty(yesterdayKey)) {
+      console.log(`✅ Yesterday ${yesterdayKey} already exists with ${cache.dailyTotals[yesterdayKey]} transactions`);
+      return;
+    }
+    
+    console.log(`📅 ENSURING: Yesterday ${yesterdayKey} must exist for dashboard`);
+    
+    // Fetch yesterday's data specifically
+    try {
+      const yesterdayTransactions = await this.fetchTransactionsForDay(yesterdayKey);
+      
+      if (yesterdayTransactions.length > 0) {
+        console.log(`✅ Found ${yesterdayTransactions.length} transactions for yesterday ${yesterdayKey}`);
+        const updatedCache = this.updateCacheWithNewTransactions(cache, yesterdayTransactions);
+        updatedCache.dailyStatus[yesterdayKey] = 'complete';
+        this.saveCacheV2(updatedCache);
+      } else {
+        console.log(`📊 Yesterday ${yesterdayKey}: 0 transactions (empty day)`);
+        // Create empty day entry
+        cache.dailyTotals[yesterdayKey] = 0;
+        cache.dailyStatus[yesterdayKey] = 'complete';
+        cache.recentHourly[yesterdayKey] = new Array(24).fill(0);
+        this.saveCacheV2(cache);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to ensure yesterday ${yesterdayKey}:`, error);
+      // Create empty day as fallback
+      cache.dailyTotals[yesterdayKey] = 0;
+      cache.dailyStatus[yesterdayKey] = 'complete';
+      cache.recentHourly[yesterdayKey] = new Array(24).fill(0);
+      this.saveCacheV2(cache);
+    }
   }
 
   /**
@@ -194,6 +240,8 @@ export class CacheManagerV2 {
           // Still mark as complete with 0 transactions
           updatedCache.dailyTotals[dayKey] = 0;
           updatedCache.dailyStatus[dayKey] = 'complete';
+          // Initialize empty hourly data for display
+          updatedCache.recentHourly[dayKey] = new Array(24).fill(0);
           this.saveCacheV2(updatedCache);
         }
         

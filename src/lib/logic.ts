@@ -66,26 +66,17 @@ export function recomputeDayStatus(
  * ULTRA-FIX: Always returns the most current data available for dashboard display
  */
 export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): string | null {
-  // FORCE VERCEL REBUILD - ULTRA-FIX ACTIVE v6 - BUILD FIX
-  console.log('🔥 ULTRA-FIX: findLatestCompleteDate running with new logic v6 - BUILD FIXED');
+  // CORRECT LOGIC: Always show YESTERDAY (today - 1)
+  // Dashboard should show previous day, not most recent data day
+  const yesterday = addUTCDays(nowUTC, -1);
+  const yesterdayKey = toUTCDateKey(yesterday);
   
-  // ULTRA-FIX: Always prioritize most recent data over "complete" status
-  // Check last 14 days including today for ANY data
-  for (let i = 0; i <= 14; i++) {
-    const d = addUTCDays(nowUTC, -i);
-    const key = toUTCDateKey(d);
-    
-    // Skip if no transaction data exists
-    if (!cache.dailyTotals?.[key] || cache.dailyTotals[key] === 0) continue;
-    
-    // ULTRA-FIX: Return FIRST day with any data (most recent)
-    console.log('🔥 ULTRA-FIX: Found recent data on', key, 'with', cache.dailyTotals[key], 'transactions');
-    return key;
-  }
+  console.log('📅 CORRECT LOGIC: Dashboard should show yesterday:', yesterdayKey);
+  console.log('📊 Yesterday data:', cache.dailyTotals?.[yesterdayKey] || 0, 'transactions');
   
-  // No data found in last 14 days
-  console.log('🔥 ULTRA-FIX: No data found in last 14 days');
-  return null;
+  // Always return yesterday, even if it has 0 transactions
+  // This ensures dashboard shows the correct day consistently
+  return yesterdayKey;
 }
 
 /**

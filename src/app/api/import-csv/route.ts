@@ -60,51 +60,41 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting CSV import from API...');
     
-    const dia12Path = path.join(process.cwd(), 'dia12.csv');
-    const dia13Path = path.join(process.cwd(), 'dia13.csv');
+    // Find ALL dia*.csv files in root
+    const rootDir = process.cwd();
+    const allFiles = fs.readdirSync(rootDir);
+    const csvFiles = allFiles.filter(file => file.match(/^dia\d+\.csv$/i));
+    
+    console.log(`📂 Found ${csvFiles.length} CSV files:`, csvFiles);
     
     const allTransactions: Transaction[] = [];
-    const importResults = {
-      dia12: 0,
-      dia13: 0,
+    const importResults: Record<string, number> = {
       total: 0,
-      dailyTotals: {} as Record<string, number>
     };
+    const dailyTotals: Record<string, number> = {};
     
-    // Process dia12.csv
-    if (fs.existsSync(dia12Path)) {
-      console.log('📄 Reading dia12.csv...');
-      const dia12Content = fs.readFileSync(dia12Path, 'utf8');
-      const dia12Data = parseCSV(dia12Content);
-      const dia12Txs = dia12Data
+    // Process each CSV file
+    for (const csvFile of csvFiles) {
+      const csvPath = path.join(rootDir, csvFile);
+      console.log(`📄 Reading ${csvFile}...`);
+      
+      const csvContent = fs.readFileSync(csvPath, 'utf8');
+      const csvData = parseCSV(csvContent);
+      const validTxs = csvData
         .filter(csv => csv.ToAddress?.toLowerCase() === CONTRACT_ADDRESS.toLowerCase())
         .filter(csv => csv.Status === 'ok')
         .map((csv, index) => csvToTransaction(csv, index));
       
-      console.log(`✅ Dia 12: ${dia12Txs.length} valid transactions`);
-      importResults.dia12 = dia12Txs.length;
-      allTransactions.push(...dia12Txs);
-    }
-    
-    // Process dia13.csv  
-    if (fs.existsSync(dia13Path)) {
-      console.log('📄 Reading dia13.csv...');
-      const dia13Content = fs.readFileSync(dia13Path, 'utf8');
-      const dia13Data = parseCSV(dia13Content);
-      const dia13Txs = dia13Data
-        .filter(csv => csv.ToAddress?.toLowerCase() === CONTRACT_ADDRESS.toLowerCase())
-        .filter(csv => csv.Status === 'ok')
-        .map((csv, index) => csvToTransaction(csv, index));
-      
-      console.log(`✅ Dia 13: ${dia13Txs.length} valid transactions`);
-      importResults.dia13 = dia13Txs.length;
-      allTransactions.push(...dia13Txs);
+      console.log(`✅ ${csvFile}: ${validTxs.length} valid transactions`);
+      importResults[csvFile] = validTxs.length;
+      allTransactions.push(...validTxs);
     }
     
     if (allTransactions.length === 0) {
       return NextResponse.json({
         success: false,
         error: 'No CSV files found or no valid transactions',
+        filesFound: csvFiles,
         timestamp: new Date().toISOString()
       });
     }
@@ -184,7 +174,7 @@ export async function POST(request: NextRequest) {
       const hourly = cache.recentHourly[dayKey];
       cache.dailyStatus[dayKey] = recomputeDayStatus(dayKey, total, hourly, todayKey);
       
-      importResults.dailyTotals[dayKey] = total;
+      dailyTotals[dayKey] = total;
     });
     
     // Update metadata
@@ -202,14 +192,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
+      filesProcessed: csvFiles,
       importResults,
+      dailyTotals,
       finalStats: {
         totalTransactions: cache.totalTransactions,
         totalDaysActive: cache.totalDaysActive,
         latestBlock: cache.cursor.lastBlockNumber,
         processedDays: Array.from(processedDays).sort()
       },
-      message: `Successfully imported ${allTransactions.length} transactions from CSV files`
+      message: `Successfully imported ${allTransactions.length} transactions from ${csvFiles.length} CSV files`
     });
     
   } catch (error) {

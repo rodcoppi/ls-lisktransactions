@@ -62,11 +62,12 @@ export function recomputeDayStatus(
 }
 
 /**
- * Find the most recent date with complete 24h data
- * Ignores today (always incomplete) and checks up to 14 days back
+ * Find the most recent date with data (prefers complete, fallback to any data)
+ * ULTRA-FIX: Always returns the most current data available for dashboard display
  */
 export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): string | null {
   const todayKey = toUTCDateKey(nowUTC);
+  let latestWithAnyData: string | null = null;
   
   // Check last 14 days for the most recent complete day
   for (let i = 1; i <= 14; i++) {
@@ -76,11 +77,18 @@ export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): s
     // Skip if no status recorded
     if (!cache.dailyStatus?.[key]) continue;
     
-    // Return first complete day found
+    // Track latest day with any data (fallback)
+    if (!latestWithAnyData && cache.dailyTotals?.[key]) {
+      latestWithAnyData = key;
+    }
+    
+    // Return first complete day found (preferred)
     if (cache.dailyStatus[key] === 'complete') return key;
   }
   
-  return null;
+  // ULTRA-FIX: If no complete days found, return latest day with any data
+  // This ensures dashboard always shows current data instead of being "stuck"
+  return latestWithAnyData;
 }
 
 /**

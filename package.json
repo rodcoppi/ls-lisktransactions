@@ -1,11 +1,11 @@
 {
   "name": "luckysea-lisk-analytics",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "🎲 LuckySea Analytics Dashboard - Real-time Lisk blockchain transaction analytics with LuckySea design system",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "ULTRA_FIX_VERSION=2 next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",

@@ -558,20 +558,20 @@ export class CacheManagerV2 {
 
   private loadCacheV2(): OptimizedCacheV2 | null {
     try {
-      // In production, try temp cache first, then fallback to pre-populated
-      if (process.env.NODE_ENV === 'production') {
-        if (fs.existsSync(TEMP_CACHE)) {
-          const data = fs.readFileSync(TEMP_CACHE, 'utf8');
-          return JSON.parse(data);
-        }
-      }
-      
-      // Try V2 cache file first
+      // Always try the main cache file first
       if (fs.existsSync(CACHE_V2_FILE)) {
+        console.log(`📖 Loading cache from: ${CACHE_V2_FILE}`);
         const data = fs.readFileSync(CACHE_V2_FILE, 'utf8');
         const parsed = JSON.parse(data);
-        console.log(`✅ Loaded V2 cache: ${parsed.totalTransactions} transactions`);
+        console.log(`✅ Loaded V2 cache: ${parsed.totalTransactions} transactions, ${Object.keys(parsed.dailyTotals || {}).length} days`);
         return parsed;
+      }
+      
+      // In production, try temp cache as fallback
+      if (process.env.NODE_ENV === 'production' && fs.existsSync(TEMP_CACHE)) {
+        console.log(`📖 Loading temp cache from: ${TEMP_CACHE}`);
+        const data = fs.readFileSync(TEMP_CACHE, 'utf8');
+        return JSON.parse(data);
       }
 
       // Fallback to V1 cache and migrate

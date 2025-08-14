@@ -7,7 +7,7 @@ name: Daily Cache Update
 
 on:
   schedule:
-    - cron: '5 0 * * *'
+    - cron: "5 0 * * *"
   workflow_dispatch:
 
 jobs:
@@ -19,10 +19,8 @@ jobs:
         run: |
           echo "Starting daily cache update..."
           response=$(curl -s -w "%{http_code}" \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.AUTO_UPDATE_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            https://luckysea-lisk-analytics.vercel.app/api/auto-update)
+            -X GET \
+            https://luckysea-lisk-analytics-acx5ixwec-rodcoppis-projects.vercel.app/api/force-update)
           http_code="${response: -3}"
           response_body="${response%???}"
           echo "HTTP Status: $http_code"

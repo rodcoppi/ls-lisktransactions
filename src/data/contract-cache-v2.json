@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.2.0",
-  "generatedAtUTC": "2025-08-09T05:22:43.728Z",
+  "generatedAtUTC": "2025-08-14T04:56:37.899Z",
   "source": "migrated-from-v1",
-  "integrity": "sha256:e26c19a32101218e71d8971f676c030453f827c0bbf8e3dad2d86a9c1e482e50",
+  "integrity": "sha256:6fa12d26a56014c536fdccb6f08dc3c4422a40dbca63afb4b22a3331f5daadb0",
   "dailyTotals": {
     "2025-08-05": 7436,
     "2025-08-06": 9357,
@@ -10,7 +10,8 @@
     "2025-08-08": 6241,
     "2025-08-09": 6648,
     "2025-08-10": 0,
-    "2025-08-11": 13148
+    "2025-08-11": 13148,
+    "2025-08-14": 500
   },
   "dailyStatus": {
     "2025-08-05": "complete",
@@ -19,10 +20,11 @@
     "2025-08-08": "complete",
     "2025-08-09": "complete",
     "2025-08-10": "system issue (fixed)",
-    "2025-08-11": "complete"
+    "2025-08-11": "complete",
+    "2025-08-14": "unknown"
   },
   "monthlyTotals": {
-    "2025-08": 30673
+    "2025-08": 31173
   },
   "recentHourly": {
     "2025-08-05": [
@@ -128,16 +130,42 @@
       538,
       800,
       224
+    ],
+    "2025-08-14": [
+      0,
+      0,
+      0,
+      74,
+      426,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ]
   },
   "cursor": {
-    "lastBlockNumber": 20164741,
-    "lastTxIndex": 0,
-    "lastTxHash": ""
+    "lastBlockNumber": 20209079,
+    "lastTxIndex": 2,
+    "lastTxHash": "0xacf9919b1941861115565cd5fdf078cdc63a74dfce8030cafe01139a6c461a5d"
   },
-  "lastUpdate": "2025-08-12T04:15:32.562Z",
-  "totalTransactions": 50469,
-  "totalDaysActive": 7,
+  "lastUpdate": "2025-08-14T04:56:37.899Z",
+  "totalTransactions": 50969,
+  "totalDaysActive": 8,
   "hourlyData": {
     "2025-08-09": {
       "3": 163,

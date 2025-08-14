@@ -46,19 +46,16 @@ export class CacheManagerV2 {
   }
 
   private startAutoUpdate() {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔄 Development mode: Starting auto-update timer');
-      
-      setTimeout(() => {
-        this.updateCache();
-      }, 1000);
-      
-      this.updateTimer = setInterval(() => {
-        this.updateCache();
-      }, UPDATE_INTERVAL);
-    } else {
-      console.log('🎯 Production mode: Using ONLY pre-populated cache (no auto-updates)');
-    }
+    // Enable auto-updates in all environments (dev + production)
+    console.log('🔄 Auto-update timer enabled for all environments');
+    
+    setTimeout(() => {
+      this.updateCache();
+    }, 1000);
+    
+    this.updateTimer = setInterval(() => {
+      this.updateCache();
+    }, UPDATE_INTERVAL);
   }
 
   private forceColdStart: boolean = false;
@@ -175,13 +172,24 @@ export class CacheManagerV2 {
         const validTxs = this.filterAndNormalizeTxs(data.items);
         
         // Filter for new transactions (with backfill buffer)
-        const newTxs = validTxs.filter(tx => 
-          tx.block > minBlock && 
-          isAfterCursor(
-            { bn: tx.block, idx: tx.txIndex || 0, hash: tx.hash },
-            { bn: existingCache.cursor.lastBlockNumber, idx: existingCache.cursor.lastTxIndex, hash: existingCache.cursor.lastTxHash }
-          )
-        );
+        // CRITICAL FIX: Use simple block comparison for large gaps
+        const newTxs = validTxs.filter(tx => {
+          // For transactions clearly after cursor block, accept immediately
+          if (tx.block > existingCache.cursor.lastBlockNumber) {
+            return true;
+          }
+          
+          // For same block, use full cursor comparison
+          if (tx.block === existingCache.cursor.lastBlockNumber) {
+            return isAfterCursor(
+              { bn: tx.block, idx: tx.txIndex || 0, hash: tx.hash },
+              { bn: existingCache.cursor.lastBlockNumber, idx: existingCache.cursor.lastTxIndex, hash: existingCache.cursor.lastTxHash }
+            );
+          }
+          
+          // Older than cursor block
+          return false;
+        });
 
         for (const tx of newTxs) {
           seenTxs.set(tx.hash, tx);
@@ -214,9 +222,14 @@ export class CacheManagerV2 {
     return rawTxs
       .filter(tx => {
         // Filter for successful transactions to our contract
-        const toAddress = tx.to && typeof tx.to === 'string' ? tx.to.toLowerCase() : '';
+        // Handle both string and object formats for tx.to
+        const toAddress = tx.to 
+          ? (typeof tx.to === 'string' ? tx.to : tx.to.hash || tx.to.address || '')
+          : '';
         const success = isSuccess(tx.status);
-        return toAddress === CONTRACT_ADDRESS.toLowerCase() && success;
+        const isToContract = toAddress.toLowerCase() === CONTRACT_ADDRESS.toLowerCase();
+        
+        return isToContract && success;
       })
       .map((tx, index) => ({
         hash: tx.hash,
@@ -468,17 +481,29 @@ export class CacheManagerV2 {
 
   private saveCacheV2(data: OptimizedCacheV2): void {
     try {
-      const saveFile = process.env.NODE_ENV === 'production' ? TEMP_CACHE : CACHE_V2_FILE;
+      // Try persistent location first (unified approach)
+      let saveFile = CACHE_V2_FILE;
       
-      const dir = path.dirname(saveFile);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      try {
+        const dir = path.dirname(saveFile);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(saveFile, JSON.stringify(data, null, 2));
+        console.log(`💾 Cache V2 saved to persistent location: ${saveFile} (${data.totalTransactions} transactions)`);
+      } catch (persistentError) {
+        // Fallback to temp location if persistent fails
+        console.warn('⚠️ Persistent save failed, using temp fallback:', persistentError.message);
+        saveFile = TEMP_CACHE;
+        const dir = path.dirname(saveFile);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(saveFile, JSON.stringify(data, null, 2));
+        console.log(`💾 Cache V2 saved to temp location: ${saveFile} (${data.totalTransactions} transactions)`);
       }
-      
-      fs.writeFileSync(saveFile, JSON.stringify(data, null, 2));
-      console.log(`💾 Cache V2 saved to ${saveFile}: ${data.totalTransactions} transactions`);
     } catch (error) {
-      console.error('❌ Failed to save cache V2:', error);
+      console.error('❌ Failed to save cache V2 to any location:', error);
     }
   }
 

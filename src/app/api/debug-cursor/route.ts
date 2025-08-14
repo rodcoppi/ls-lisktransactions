@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         blockchain: {
           latestTransaction: {
             timestamp: latestTx?.timestamp,
-            block: latestTx?.block,
+            block_number: latestTx?.block_number,
             hash: latestTx?.hash,
             from: latestTx?.from?.hash,
             value: latestTx?.value
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
         comparison: {
           cursorBlock: cache?.cursor?.lastBlockNumber,
           latestBlock: latestTx?.block_number,
-          blockGap: latestTx?.block_number - (cache?.cursor?.lastBlockNumber || 0),
-          shouldHaveNewData: latestTx?.block_number > (cache?.cursor?.lastBlockNumber || 0)
+          blockGap: latestTx?.block_number ? latestTx.block_number - (cache?.cursor?.lastBlockNumber || 0) : null,
+          shouldHaveNewData: latestTx?.block_number ? latestTx.block_number > (cache?.cursor?.lastBlockNumber || 0) : false
         }
       }
     });

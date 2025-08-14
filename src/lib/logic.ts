@@ -69,6 +69,9 @@ export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): s
   const todayKey = toUTCDateKey(nowUTC);
   let latestWithAnyData: string | null = null;
   
+  // FORCE VERCEL REBUILD - ULTRA-FIX ACTIVE v2
+  console.log('🔥 ULTRA-FIX: findLatestCompleteDate running with new logic v2');
+  
   // Check last 14 days for the most recent complete day
   for (let i = 1; i <= 14; i++) {
     const d = addUTCDays(nowUTC, -i);
@@ -86,6 +89,7 @@ export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): s
   
   // ULTRA-FIX: If no complete days found, return latest day with any data
   // This ensures dashboard always shows current data instead of being "stuck"
+  console.log('🔥 ULTRA-FIX: Returning latestWithAnyData =', latestWithAnyData);
   return latestWithAnyData;
 }
 

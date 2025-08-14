@@ -110,7 +110,7 @@ export default function Dashboard() {
   const fetchData = useCallback(async (signal?: AbortSignal) => {
     try {
       // Use V2 API with abort signal
-      const response = await fetch('/api/hardcoded-data', { signal });
+      const response = await fetch('/api/contract-data-v2', { signal });
       const data = await response.json();
       
       if (data.totalTransactions === 0 && data.error) {
@@ -185,7 +185,7 @@ export default function Dashboard() {
           console.log(`📡 Dev poll attempt ${pollAttempts}/${maxAttempts}`);
           
           try {
-            const pollResponse = await fetch('/api/hardcoded-data', { 
+            const pollResponse = await fetch('/api/contract-data-v2', { 
               signal: abortController.signal 
             });
             const pollData = await pollResponse.json();

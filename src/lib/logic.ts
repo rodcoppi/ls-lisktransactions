@@ -74,16 +74,14 @@ export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): s
     const d = addUTCDays(nowUTC, -i);
     const key = toUTCDateKey(d);
     
-    // Skip if no status recorded
-    if (!cache.dailyStatus?.[key]) continue;
+    // Skip if no transaction data exists
+    if (!cache.dailyTotals?.[key] || cache.dailyTotals[key] === 0) continue;
     
-    // Track latest day with any data (fallback)
-    if (!latestWithAnyData && cache.dailyTotals?.[key]) {
-      latestWithAnyData = key;
-    }
+    // Track latest day with any data (fallback) - always update to get most recent
+    latestWithAnyData = key;
     
     // Return first complete day found (preferred)
-    if (cache.dailyStatus[key] === 'complete') return key;
+    if (cache.dailyStatus?.[key] === 'complete') return key;
   }
   
   // ULTRA-FIX: If no complete days found, return latest day with any data

@@ -13,7 +13,10 @@ import {
   isAfterCursor,
   mergeAndDedupeTxs,
   weeklyPeriodUTC,
-  monthlyPeriodUTC
+  monthlyPeriodUTC,
+  findMissingDays,
+  isDayComplete,
+  getDayTimestampRange
 } from './logic';
 
 const CONTRACT_ADDRESS = '0xf18485f75551FFCa4011C32a0885ea8C22336840';
@@ -149,16 +152,132 @@ export class CacheManagerV2 {
   }
 
   private async incrementalUpdate(existingCache: OptimizedCacheV2): Promise<void> {
+    const nowUTC = new Date();
+    
+    // SMART BATCH STRATEGY: Process missing complete days first
+    const missingDays = findMissingDays(existingCache, nowUTC);
+    
+    if (missingDays.length > 0) {
+      console.log(`🎯 SMART BATCH: Processing ${missingDays.length} missing complete days`);
+      await this.processMissingDays(existingCache, missingDays);
+    }
+    
+    // Then handle current day updates (lightweight)
+    console.log(`⚡ Processing current day updates...`);
+    await this.processCurrentDayUpdates(existingCache);
+  }
+
+  /**
+   * Process missing complete days one by one (batch strategy)
+   */
+  private async processMissingDays(cache: OptimizedCacheV2, missingDays: string[]): Promise<void> {
+    let updatedCache = cache;
+    
+    for (const dayKey of missingDays) {
+      console.log(`📅 Processing missing day: ${dayKey}`);
+      
+      try {
+        const dayTransactions = await this.fetchTransactionsForDay(dayKey);
+        
+        if (dayTransactions.length > 0) {
+          console.log(`✅ Day ${dayKey}: Found ${dayTransactions.length} transactions`);
+          updatedCache = this.updateCacheWithNewTransactions(updatedCache, dayTransactions);
+          
+          // Mark day as complete
+          updatedCache.dailyStatus[dayKey] = 'complete';
+          
+          // Save checkpoint after each day
+          this.saveCacheV2(updatedCache);
+          console.log(`💾 Checkpoint saved for day ${dayKey}`);
+        } else {
+          console.log(`📊 Day ${dayKey}: No transactions (valid empty day)`);
+          // Still mark as complete with 0 transactions
+          updatedCache.dailyTotals[dayKey] = 0;
+          updatedCache.dailyStatus[dayKey] = 'complete';
+          this.saveCacheV2(updatedCache);
+        }
+        
+      } catch (error) {
+        console.error(`❌ Failed to process day ${dayKey}:`, error);
+        // Continue with next day instead of failing entirely
+        continue;
+      }
+    }
+  }
+
+  /**
+   * Fetch transactions for a specific day using timestamp filtering
+   */
+  private async fetchTransactionsForDay(dateKey: string): Promise<Transaction[]> {
+    const { start, end } = getDayTimestampRange(dateKey);
+    const allTransactions: Transaction[] = [];
+    let nextPageParams = null;
+    let page = 1;
+    const maxPagesPerDay = 20; // Limit per day to avoid timeouts
+    
+    console.log(`🔍 Fetching day ${dateKey}: ${start} to ${end}`);
+    
+    do {
+      const params = new URLSearchParams({
+        ...(nextPageParams || {}),
+        // Add timestamp filtering for this specific day
+        // Note: Blockscout API might not support timestamp filtering directly
+        // We'll filter client-side for now, but this is more efficient server-side
+      });
+      
+      const url = `https://blockscout.lisk.com/api/v2/addresses/${CONTRACT_ADDRESS}/transactions?${params}`;
+      
+      const response = await fetch(url);
+      const data: BlockscoutResponse = await response.json();
+      
+      if (!data.items || data.items.length === 0) {
+        break;
+      }
+      
+      const validTxs = this.filterAndNormalizeTxs(data.items);
+      
+      // Filter transactions for this specific day
+      const dayTxs = validTxs.filter(tx => {
+        const txDate = new Date(tx.timestamp);
+        const txDateKey = toUTCDateKey(txDate);
+        return txDateKey === dateKey;
+      });
+      
+      allTransactions.push(...dayTxs);
+      
+      // Check if we've gone past this day (optimization)
+      const firstTxDate = validTxs.length > 0 ? new Date(validTxs[0].timestamp) : null;
+      if (firstTxDate && toUTCDateKey(firstTxDate) < dateKey) {
+        // We've gone past this day, stop fetching
+        console.log(`📈 Reached past day ${dateKey}, stopping fetch`);
+        break;
+      }
+      
+      nextPageParams = data.next_page_params;
+      page++;
+      
+      // Safety limit per day
+      if (page > maxPagesPerDay) {
+        console.warn(`⚠️ Hit page limit for day ${dateKey}, may be incomplete`);
+        break;
+      }
+      
+    } while (nextPageParams);
+    
+    console.log(`📊 Day ${dateKey}: Collected ${allTransactions.length} transactions in ${page-1} pages`);
+    return allTransactions;
+  }
+
+  /**
+   * Handle current day updates (lightweight, few pages)
+   */
+  private async processCurrentDayUpdates(existingCache: OptimizedCacheV2): Promise<void> {
     const seenTxs = new Map<string, Transaction>();
     let nextPageParams = null;
     let page = 1;
-    const maxPages = 10;
+    const maxPages = 5; // Light update for current day
 
-    console.log(`🔍 Incremental update from block ${existingCache.cursor.lastBlockNumber}`);
-
-    // Backfill window to handle reorgs
-    const minBlock = Math.max(0, existingCache.cursor.lastBlockNumber - BACKFILL_BLOCKS);
-    console.log(`📈 Using backfill window: blocks ${minBlock} to current`);
+    console.log(`⚡ Current day update from cursor block ${existingCache.cursor.lastBlockNumber}`);
 
     do {
       const url = nextPageParams 
@@ -171,15 +290,12 @@ export class CacheManagerV2 {
       if (data.items && data.items.length > 0) {
         const validTxs = this.filterAndNormalizeTxs(data.items);
         
-        // Filter for new transactions (with backfill buffer)
-        // CRITICAL FIX: Use simple block comparison for large gaps
+        // Filter for new transactions after cursor
         const newTxs = validTxs.filter(tx => {
-          // For transactions clearly after cursor block, accept immediately
           if (tx.block > existingCache.cursor.lastBlockNumber) {
             return true;
           }
           
-          // For same block, use full cursor comparison
           if (tx.block === existingCache.cursor.lastBlockNumber) {
             return isAfterCursor(
               { bn: tx.block, idx: tx.txIndex || 0, hash: tx.hash },
@@ -187,7 +303,6 @@ export class CacheManagerV2 {
             );
           }
           
-          // Older than cursor block
           return false;
         });
 
@@ -195,7 +310,7 @@ export class CacheManagerV2 {
           seenTxs.set(tx.hash, tx);
         }
 
-        // Stop if no new transactions in this page
+        // Stop if no new transactions
         if (newTxs.length === 0) {
           break;
         }
@@ -206,16 +321,13 @@ export class CacheManagerV2 {
 
     } while (nextPageParams && page <= maxPages);
 
-    if (seenTxs.size === 0) {
-      console.log('✨ No new transactions found');
-      return;
+    if (seenTxs.size > 0) {
+      console.log(`🆕 Current day: Found ${seenTxs.size} new transactions`);
+      const updatedCache = this.updateCacheWithNewTransactions(existingCache, Array.from(seenTxs.values()));
+      this.saveCacheV2(updatedCache);
+    } else {
+      console.log('✨ Current day: No new transactions');
     }
-
-    console.log(`🆕 Found ${seenTxs.size} new transactions`);
-
-    // Merge with existing and update cache
-    const updatedCache = this.updateCacheWithNewTransactions(existingCache, Array.from(seenTxs.values()));
-    this.saveCacheV2(updatedCache);
   }
 
   private filterAndNormalizeTxs(rawTxs: any[]): Transaction[] {

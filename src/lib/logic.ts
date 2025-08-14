@@ -166,6 +166,77 @@ export function mergeAndDedupeTxs(
 }
 
 /**
+ * Find missing complete days between last update and today
+ * Returns array of date keys that need to be processed
+ */
+export function findMissingDays(cache: OptimizedCacheV2, nowUTC: Date): string[] {
+  const todayKey = toUTCDateKey(nowUTC);
+  const missingDays: string[] = [];
+  
+  // Find the latest day with data in cache
+  const existingDays = Object.keys(cache.dailyTotals || {}).sort();
+  const lastDayInCache = existingDays[existingDays.length - 1];
+  
+  if (!lastDayInCache) {
+    // No data at all - start from 7 days ago
+    for (let i = 7; i >= 1; i--) {
+      const day = addUTCDays(nowUTC, -i);
+      const dayKey = toUTCDateKey(day);
+      if (isDayComplete(day, nowUTC)) {
+        missingDays.push(dayKey);
+      }
+    }
+    return missingDays;
+  }
+  
+  // Find days between last cached day and today
+  const lastDate = new Date(lastDayInCache + 'T00:00:00.000Z');
+  let currentDay = addUTCDays(lastDate, 1); // Start from day after last cached
+  
+  while (currentDay < nowUTC) {
+    const dayKey = toUTCDateKey(currentDay);
+    
+    // Only include complete days (not today unless it's complete)
+    if (isDayComplete(currentDay, nowUTC)) {
+      missingDays.push(dayKey);
+    }
+    
+    currentDay = addUTCDays(currentDay, 1);
+  }
+  
+  console.log(`🔍 Missing days analysis: Found ${missingDays.length} missing days:`, missingDays);
+  return missingDays;
+}
+
+/**
+ * Check if a day is complete (past 23:59:59 UTC)
+ * A day is complete if it's before today in UTC
+ */
+export function isDayComplete(dayDate: Date, nowUTC: Date): boolean {
+  const dayStart = startOfUTCDay(dayDate);
+  const todayStart = startOfUTCDay(nowUTC);
+  
+  // Day is complete if it's before today
+  return dayStart < todayStart;
+}
+
+/**
+ * Get UTC timestamp range for a specific day
+ * Returns start and end timestamps for Blockscout API filtering
+ */
+export function getDayTimestampRange(dateKey: string): { start: string; end: string } {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  
+  const startOfDay = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+  const endOfDay = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
+  
+  return {
+    start: startOfDay.toISOString(),
+    end: endOfDay.toISOString()
+  };
+}
+
+/**
  * Generate weekly period string for UI display
  * Only use if all 7 days are complete, otherwise show "week-to-date"
  */

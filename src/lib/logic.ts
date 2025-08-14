@@ -69,11 +69,11 @@ export function findLatestCompleteDate(cache: OptimizedCacheV2, nowUTC: Date): s
   const todayKey = toUTCDateKey(nowUTC);
   let latestWithAnyData: string | null = null;
   
-  // FORCE VERCEL REBUILD - ULTRA-FIX ACTIVE v3 - DEPLOYMENT ISSUE FIX
-  console.log('🔥 ULTRA-FIX: findLatestCompleteDate running with new logic v3');
+  // FORCE VERCEL REBUILD - ULTRA-FIX ACTIVE v4 - CRITICAL BUG FIX
+  console.log('🔥 ULTRA-FIX: findLatestCompleteDate running with new logic v4 - LOOP INCLUDES TODAY');
   
-  // Check last 14 days for the most recent complete day
-  for (let i = 1; i <= 14; i++) {
+  // Check last 14 days including today for the most recent complete day
+  for (let i = 0; i <= 14; i++) {
     const d = addUTCDays(nowUTC, -i);
     const key = toUTCDateKey(d);
     

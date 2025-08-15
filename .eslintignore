@@ -53,3 +53,18 @@ storybook-static/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
+
+# Scripts and debug files
+scripts/
+*.js
+!src/**/*.js
+!*.config.js
+!jest.config.js
+
+# Serena directory
+serena/
+
+# Debug and fix scripts in root
+fix-*.js
+import-csv.js
+optimize-cache.js

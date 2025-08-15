@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import HourlyBarChart from "../components/HourlyBarChart";
 import DailyTrend from "../components/DailyTrend";
 import ThirtyDayProgress from "../components/ThirtyDayProgress";
@@ -143,8 +144,17 @@ export default function Dashboard() {
                 "2025-08-11": 36098,
                 "2025-08-12": 10300,
                 "2025-08-13": 7624
-              }
-            }
+              },
+              hourlyData: {},
+              monthlyData: {},
+              todayTxs: 0,
+              thisWeekTxs: 91843,
+              thisMonthTxs: 105669,
+              totalDaysActive: 8,
+              avgTxsPerDay: 13208,
+              avgTxsPerMonth: 105669
+            },
+            lastUpdate: "2025-08-14T19:30:00.000Z"
           };
           setContractData(hardcodedData);
           setFetchProgress(null);
@@ -300,9 +310,11 @@ export default function Dashboard() {
               </g>
             </svg>
             <div className="w-px h-8 sm:w-1 sm:h-10 bg-gradient-to-b from-transparent via-emerald-400 to-transparent rounded-full shadow-emerald-400/50 shadow-md"></div>
-            <img 
+            <Image 
               src="https://luckysea.gg/assets/logotipo.svg" 
               alt="LuckySea" 
+              width={96}
+              height={32}
               className="w-20 h-auto sm:w-24" 
             />
           </div>

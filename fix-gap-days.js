@@ -106,7 +106,7 @@ function main() {
     console.log(`\n📅 Processando ${dia.date}:`);
     
     let dayTotal = 0;
-    let dayHourlyData = {};
+    const dayHourlyData = {};
     
     // Processar todos os arquivos do dia
     dia.files.forEach(file => {

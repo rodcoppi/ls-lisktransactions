@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface LiskStats {
   secondary_coin_price: string;
@@ -327,7 +328,7 @@ export default function Dashboard() {
               borderRadius: '2px',
               boxShadow: '0 0 10px rgba(2,255,210,0.5)'
             }}></div>
-            <img src="https://luckysea.gg/assets/logotipo.svg" alt="LuckySea" style={{ width: '90px', height: 'auto' }} />
+            <Image src="https://luckysea.gg/assets/logotipo.svg" alt="LuckySea" width={90} height={30} style={{ width: '90px', height: 'auto' }} />
           </div>
           {/* Title Section - Centered */}
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>

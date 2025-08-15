@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
 interface HistoricalData {
@@ -32,11 +32,7 @@ export default function AdvancedAnalytics() {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | 'all'>('30d');
 
-  useEffect(() => {
-    fetchHistoricalData();
-  }, [selectedPeriod]);
-
-  const fetchHistoricalData = async () => {
+  const fetchHistoricalData = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -73,7 +69,11 @@ export default function AdvancedAnalytics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPeriod]);
+
+  useEffect(() => {
+    fetchHistoricalData();
+  }, [fetchHistoricalData]);
 
   const calculateWeekOverWeek = () => {
     if (historicalData.length < 14) return null;

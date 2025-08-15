@@ -16,7 +16,7 @@ export async function GET() {
     
     // PROCESSAMENTO SIMPLES E DIRETO
     const dailyTotals = cache.dailyTotals || {};
-    const totalTransactions = Object.values(dailyTotals).reduce((a: number, b: number) => a + b, 0);
+    const totalTransactions = Object.values(dailyTotals).reduce((a: number, b: unknown) => a + (b as number), 0);
     
     // ENCONTRAR ÚLTIMO DIA (ONTEM = HOJE-1)
     const today = new Date();

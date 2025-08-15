@@ -1,18 +1,11 @@
 {
   "mcpServers": {
-    "lembroume-local": {
-      "command": "python3",
-      "args": [
-        "/mnt/f/projetos/lembroume/lembroume-backend/src/lembroume/main_fastapi.py"
-      ],
-      "env": {
-        "PYTHONPATH": "/mnt/f/projetos/lembroume/lembroume-backend/src",
-        "ENV_FILE": "/mnt/f/projetos/lembroume/lembroume-backend/.env"
-      }
-    },
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
     }
   }
 }

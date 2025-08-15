@@ -8,7 +8,7 @@ function processCsvToCache() {
   const csvFiles = ['tx1.csv', 'tx2.csv', 'tx3.csv', 'tx4.csv']; // tx1=05/08, tx2=06/08, tx3=07/08, tx4=08/08
   const cacheFile = path.join(process.cwd(), 'src/data/contract-cache.json');
   
-  let allTransactions = [];
+  const allTransactions = [];
   
   // Process each CSV file
   csvFiles.forEach(fileName => {

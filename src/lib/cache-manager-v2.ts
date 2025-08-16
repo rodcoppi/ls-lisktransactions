@@ -261,7 +261,7 @@ export class CacheManagerV2 {
     const allTransactions: Transaction[] = [];
     let nextPageParams = null;
     let page = 1;
-    const maxPagesPerDay = 20; // Limit per day to avoid timeouts
+    const maxPagesPerDay = 5000; // Set high enough for complete blockchain history (70-80k txs = ~1600 pages)
     
     console.log(`🔍 Fetching day ${dateKey}: ${start} to ${end}`);
     
@@ -304,9 +304,9 @@ export class CacheManagerV2 {
       nextPageParams = data.next_page_params;
       page++;
       
-      // Safety limit per day
+      // High safety limit to ensure complete data
       if (page > maxPagesPerDay) {
-        console.warn(`⚠️ Hit page limit for day ${dateKey}, may be incomplete`);
+        console.warn(`⚠️ Hit safety limit ${maxPagesPerDay} pages for day ${dateKey}`);
         break;
       }
       

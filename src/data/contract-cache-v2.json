@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.2.0",
-  "generatedAtUTC": "2025-08-16T05:33:02.082Z",
+  "generatedAtUTC": "2025-08-16T08:04:53.946Z",
   "source": "blockscout/lisk.com",
-  "integrity": "sha256:27b3a8ef0c83a300f16ed104f563aab677a7e86fc6e567699a36d7dd04eef533",
+  "integrity": "sha256:0f941ad06b1e8be6eacf0860d8ac3e0999f68e24e47ce953daf226602ddc174d",
   "dailyTotals": {
     "2025-08-04": 2,
     "2025-08-05": 7436,
@@ -15,7 +15,7 @@
     "2025-08-13": 3812,
     "2025-08-14": 5988,
     "2025-08-15": 12880,
-    "2025-08-16": 2478
+    "2025-08-16": 2854
   },
   "dailyStatus": {
     "2025-08-04": "partial",
@@ -32,7 +32,7 @@
     "2025-08-16": "unknown"
   },
   "monthlyTotals": {
-    "2025-08": 80885
+    "2025-08": 81261
   },
   "recentHourly": {
     "2025-08-16": [
@@ -43,8 +43,8 @@
       710,
       0,
       0,
-      0,
-      0,
+      356,
+      20,
       0,
       0,
       0,
@@ -219,11 +219,11 @@
     ]
   },
   "cursor": {
-    "lastBlockNumber": 20295715,
+    "lastBlockNumber": 20301295,
     "lastTxIndex": 10,
-    "lastTxHash": "0x55ec4e32d6855ac9a92a6cb7fe0caace7d76a1b0eb46297294074f137b05bc5c"
+    "lastTxHash": "0x210c493db6aef92a7b72823077ac12d334464e003fcfd5f81087429c460eb880"
   },
-  "lastUpdate": "2025-08-16T05:33:02.082Z",
-  "totalTransactions": 80885,
+  "lastUpdate": "2025-08-16T08:04:53.946Z",
+  "totalTransactions": 81261,
   "totalDaysActive": 12
 }

@@ -269,7 +269,8 @@ export default function AdvancedAnalytics() {
                     {new Date(analytics.peakDay.date + 'T00:00:00Z').toLocaleDateString('en-US', {
                       weekday: 'long',
                       month: 'short',
-                      day: 'numeric'
+                      day: 'numeric',
+                      timeZone: 'UTC'
                     })}
                   </div>
                   <div className="text-lg sm:text-2xl font-bold text-white mt-1 leading-none">
@@ -331,7 +332,8 @@ export default function AdvancedAnalytics() {
                       {new Date(day.date + 'T00:00:00Z').toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
-                        day: 'numeric'
+                        day: 'numeric',
+                        timeZone: 'UTC'
                       })}
                     </div>
                     <div className={`px-2 py-1 rounded text-xs font-medium ${

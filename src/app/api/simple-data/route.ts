@@ -55,6 +55,8 @@ export async function GET() {
       weeklyTxs,
       monthlyTxs,
       dailyTotals,
+      recentHourly: cache.recentHourly || {},
+      dailyStatus: cache.dailyStatus || {},
       totalDaysActive: Object.keys(dailyTotals).length,
       avgTxsPerDay: Math.round(totalTransactions / Object.keys(dailyTotals).length),
       lastUpdate: cache.lastUpdate || new Date().toISOString(),

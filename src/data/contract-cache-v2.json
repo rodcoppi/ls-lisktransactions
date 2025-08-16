@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.2.0",
-  "generatedAtUTC": "2025-08-14T18:28:11.177Z",
+  "generatedAtUTC": "2025-08-15T16:18:40.915Z",
   "source": "migrated-from-v1",
-  "integrity": "sha256:6fa12d26a56014c536fdccb6f08dc3c4422a40dbca63afb4b22a3331f5daadb0",
+  "integrity": "sha256:b75a6a2e8912d09639704ac7ced58894c5601cf1f940fdd9f3d30714efb28fd5",
   "dailyTotals": {
     "2025-08-05": 7436,
     "2025-08-06": 9357,
@@ -13,7 +13,8 @@
     "2025-08-11": 36098,
     "2025-08-14": 1030,
     "2025-08-12": 10300,
-    "2025-08-13": 7624
+    "2025-08-13": 7624,
+    "2025-08-15": 250
   },
   "dailyStatus": {
     "2025-08-05": "complete",
@@ -25,10 +26,11 @@
     "2025-08-11": "complete",
     "2025-08-14": "current",
     "2025-08-12": "complete",
-    "2025-08-13": "complete"
+    "2025-08-13": "complete",
+    "2025-08-15": "unknown"
   },
   "monthlyTotals": {
-    "2025-08": 31173
+    "2025-08": 31423
   },
   "recentHourly": {
     "2025-08-05": [
@@ -229,16 +231,42 @@
       "20": 960,
       "21": 64,
       "23": 28
-    }
+    },
+    "2025-08-15": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      160,
+      90,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
   },
   "cursor": {
-    "lastBlockNumber": 20209079,
-    "lastTxIndex": 2,
-    "lastTxHash": "0xacf9919b1941861115565cd5fdf078cdc63a74dfce8030cafe01139a6c461a5d"
+    "lastBlockNumber": 20272915,
+    "lastTxIndex": 10,
+    "lastTxHash": "0x6f8ef3ea38cf404ae9c5fbeecc93bb050535ce5a4ade7422875475392ea8db03"
   },
-  "lastUpdate": "2025-08-14T18:28:11.177Z",
-  "totalTransactions": 105669,
-  "totalDaysActive": 10,
+  "lastUpdate": "2025-08-15T16:18:40.915Z",
+  "totalTransactions": 105919,
+  "totalDaysActive": 11,
   "hourlyData": {
     "2025-08-09": {
       "3": 163,

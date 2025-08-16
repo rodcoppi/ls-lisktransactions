@@ -110,14 +110,41 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async (signal?: AbortSignal) => {
     try {
-      // Use V2 API with abort signal
-      const response = await fetch('/api/contract-data-v2', { signal });
+      // Use simple-data API that reads from actual cache
+      const response = await fetch('/api/simple-data', { signal });
       const data = await response.json();
       
       // FORÇA SUCESSO - IGNORA QUALQUER ERRO!
       if (data.success || data.totalTransactions > 0) {
         console.log('✅ DADOS ENCONTRADOS - FORÇANDO SUCESSO!', data.totalTransactions);
-        setContractData(data);
+        
+        // Transform simple-data format to expected ContractData format
+        const transformedData: ContractData = {
+          totalTransactions: data.totalTransactions,
+          lastUpdate: data.lastUpdate,
+          analysis: {
+            latestCompleteDate: data.latestCompleteDate,
+            latestCompleteDateFormatted: data.latestCompleteDateFormatted,
+            latestDayTxs: data.latestDayTxs,
+            weeklyTxs: data.weeklyTxs,
+            monthlyTxs: data.monthlyTxs,
+            weeklyPeriod: `Week-to-date: ${new Date(Date.now() - 7*24*60*60*1000).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} - ${data.latestCompleteDateFormatted}`,
+            monthlyPeriod: `Month-to-date: ${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} - ${data.latestCompleteDateFormatted}`,
+            hourlyData: {},
+            dailyData: data.dailyTotals || {},
+            monthlyData: {},
+            recentHourly: {},
+            dailyStatus: {},
+            todayTxs: data.latestDayTxs || 0,
+            thisWeekTxs: data.weeklyTxs || 0,
+            thisMonthTxs: data.monthlyTxs || 0,
+            totalDaysActive: data.totalDaysActive || 0,
+            avgTxsPerDay: data.avgTxsPerDay || 0,
+            avgTxsPerMonth: data.monthlyTxs || 0
+          }
+        };
+        
+        setContractData(transformedData);
         setFetchProgress(null);
         setLoading(false);
         return;

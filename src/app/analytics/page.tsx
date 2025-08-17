@@ -341,9 +341,15 @@ export default function AdvancedAnalytics() {
                         ? 'bg-emerald-400/20 text-emerald-400 border border-emerald-400/30'
                         : day.status === 'system_issue'
                         ? 'bg-orange-400/20 text-orange-400 border border-orange-400/30'
+                        : day.status === 'incomplete_data'
+                        ? 'bg-red-400/20 text-red-400 border border-red-400/30'
                         : 'bg-gray-400/20 text-gray-400 border border-gray-400/30'
                     }`}>
-                      {day.status === 'system_issue' ? 'system issue (fixed)' : day.status || 'unknown'}
+                      {day.status === 'system_issue' 
+                        ? 'system issue (fixed)' 
+                        : day.status === 'incomplete_data'
+                        ? 'incomplete data'
+                        : day.status || 'unknown'}
                     </div>
                   </div>
                   

@@ -23,7 +23,7 @@ export default function HourlyBarChart({ hourlyData, date, dateFormatted, totalT
   ) : { hour: 0, count: 0 };
   
   const maxCount = hours.length > 0 ? Math.max(...hours.map(h => h.count)) : 1;
-  const maxCountWithPadding = maxCount * 1.15; // Add 15% padding to top for tooltip space
+  const maxCountWithPadding = maxCount * 1.30; // Add 30% padding to top for tooltip space
   const chartHeight = 336; // pixels - 20% taller (280 + 56)
   
   return (

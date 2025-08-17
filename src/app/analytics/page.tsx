@@ -350,14 +350,13 @@ export default function AdvancedAnalytics() {
                       <span className="text-white font-semibold">{(day.dailyCount || 0).toLocaleString()}</span> txs
                     </div>
                     <div className="text-gray-400 text-xs sm:text-sm">
-                      Peak: {day.peakHour?.hour || 0}:00 ({day.peakHour?.count || 0})
+                      {day.peakHour?.count > 0 
+                        ? `Peak: ${day.peakHour.hour}:00 (${day.peakHour.count})`
+                        : 'Peak: No hourly data'
+                      }
                     </div>
                     <div className="text-gray-500 text-xs">
-                      {day.timestamp ? new Date(day.timestamp).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        timeZone: 'UTC'
-                      }) : '--:--'} UTC
+                      {day.status === 'complete' ? 'Complete day' : day.status || 'Unknown'}
                     </div>
                   </div>
                 </div>

@@ -135,6 +135,20 @@ export class HistoricalDataManager {
           dayHourlyData = recentHourly[dateStr];
         }
         
+        // Calculate peak hour for this specific day
+        let dayPeakHour = { hour: 0, count: 0 };
+        if (dayHourlyData && typeof dayHourlyData === 'object') {
+          const hourlyEntries = Array.isArray(dayHourlyData) 
+            ? dayHourlyData.map((count, hour) => ({ hour, count }))
+            : Object.entries(dayHourlyData).map(([hour, count]) => ({ hour: parseInt(hour), count: count as number }));
+          
+          if (hourlyEntries.length > 0) {
+            dayPeakHour = hourlyEntries.reduce((max, current) => 
+              current.count > max.count ? current : max
+            );
+          }
+        }
+        
         const snapshot: DailySnapshot = {
           date: dateStr,
           totalTransactions: currentData.totalTransactions || 0,
@@ -144,7 +158,7 @@ export class HistoricalDataManager {
           weeklyTotal: currentData.analysis.weeklyTxs || 0,
           monthlyTotal: currentData.analysis.monthlyTxs || 0,
           avgTxsPerDay: currentData.analysis.avgTxsPerDay || 0,
-          peakHour: currentData.analysis.peakHour || { hour: 0, count: 0 },
+          peakHour: dayPeakHour,
           status: (dailyStatus[dateStr] as 'complete' | 'partial' | 'pending') || 'complete'
         };
         

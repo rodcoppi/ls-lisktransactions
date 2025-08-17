@@ -23,7 +23,7 @@ export default function HourlyBarChart({ hourlyData, date, dateFormatted, totalT
   ) : { hour: 0, count: 0 };
   
   const maxCount = hours.length > 0 ? Math.max(...hours.map(h => h.count)) : 1;
-  const chartHeight = 280; // pixels - made taller as requested
+  const chartHeight = 336; // pixels - 20% taller (280 + 56)
   
   return (
     <div className="bg-gradient-to-br from-[#041924] to-[#052738] p-4 sm:p-8 rounded-xl shadow-xl border border-white/10 overflow-hidden">

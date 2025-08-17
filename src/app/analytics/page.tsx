@@ -339,9 +339,11 @@ export default function AdvancedAnalytics() {
                     <div className={`px-2 py-1 rounded text-xs font-medium ${
                       day.status === 'complete' 
                         ? 'bg-emerald-400/20 text-emerald-400 border border-emerald-400/30'
+                        : day.status === 'system_issue'
+                        ? 'bg-orange-400/20 text-orange-400 border border-orange-400/30'
                         : 'bg-gray-400/20 text-gray-400 border border-gray-400/30'
                     }`}>
-                      {day.status || 'unknown'}
+                      {day.status === 'system_issue' ? 'system issue (fixed)' : day.status || 'unknown'}
                     </div>
                   </div>
                   

@@ -18,15 +18,18 @@ export async function GET() {
     const dailyTotals = cache.dailyTotals || {};
     const totalTransactions = Object.values(dailyTotals).reduce((a: number, b: unknown) => a + (b as number), 0);
     
-    // ENCONTRAR ÚLTIMO DIA (ONTEM = HOJE-1)
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = yesterday.toISOString().split('T')[0];
+    // ENCONTRAR ÚLTIMO DIA COMPLETO (baseado no dailyStatus)
+    const dailyStatus = cache.dailyStatus || {};
+    const sortedDates = Object.keys(dailyTotals).sort().reverse();
     
-    const latestDayTxs = dailyTotals[yesterdayKey] || 0;
+    // Procurar o último dia que está marcado como "complete"
+    const lastCompleteDate = sortedDates.find(date => dailyStatus[date] === 'complete') || sortedDates[1] || sortedDates[0];
+    const lastCompleteKey = lastCompleteDate;
+    
+    const latestDayTxs = dailyTotals[lastCompleteKey] || 0;
     
     // CALCULAR SEMANA E MÊS
+    const today = new Date();
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
     
@@ -43,14 +46,17 @@ export async function GET() {
     });
     
     // RESPOSTA LIMPA E DIRETA
+    const lastCompleteFormatted = new Date(lastCompleteKey + 'T00:00:00Z').toLocaleDateString('en-US', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      timeZone: 'UTC'
+    });
+    
     return NextResponse.json({
       totalTransactions,
-      latestCompleteDate: yesterdayKey,
-      latestCompleteDateFormatted: yesterday.toLocaleDateString('en-US', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
-      }),
+      latestCompleteDate: lastCompleteKey,
+      latestCompleteDateFormatted: lastCompleteFormatted,
       latestDayTxs,
       weeklyTxs,
       monthlyTxs,

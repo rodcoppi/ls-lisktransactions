@@ -14,9 +14,23 @@ export async function GET() {
     const rawData = fs.readFileSync(cacheFile, 'utf8');
     const cache = JSON.parse(rawData);
     
+    // BUSCAR TOTAL REAL DA BLOCKCHAIN
+    const CONTRACT_ADDRESS = '0xf18485f75551FFCa4011C32a0885ea8C22336840';
+    let blockchainTotalTransactions = 0;
+    
+    try {
+      const response = await fetch(`https://blockscout.lisk.com/api/v2/addresses/${CONTRACT_ADDRESS}/counters`);
+      if (response.ok) {
+        const data = await response.json();
+        blockchainTotalTransactions = parseInt(data.transactions_count) || 0;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch blockchain total, using cache fallback');
+    }
+    
     // PROCESSAMENTO SIMPLES E DIRETO
     const dailyTotals = cache.dailyTotals || {};
-    const totalTransactions = Object.values(dailyTotals).reduce((a: number, b: unknown) => a + (b as number), 0);
+    const totalTransactions = blockchainTotalTransactions || Object.values(dailyTotals).reduce((a: number, b: unknown) => a + (b as number), 0);
     
     // ENCONTRAR ÚLTIMO DIA COMPLETO (baseado no dailyStatus)
     const dailyStatus = cache.dailyStatus || {};
@@ -64,7 +78,7 @@ export async function GET() {
       recentHourly: cache.recentHourly || {},
       dailyStatus: cache.dailyStatus || {},
       totalDaysActive: Object.keys(dailyTotals).length,
-      avgTxsPerDay: Math.round(totalTransactions / Object.keys(dailyTotals).length),
+      avgTxsPerDay: Math.round(totalTransactions / Math.max(1, Object.keys(dailyTotals).length - 1)), // -1 porque primeiro dia não conta
       lastUpdate: cache.lastUpdate || new Date().toISOString(),
       success: true
     });

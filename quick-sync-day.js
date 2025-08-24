@@ -90,8 +90,25 @@ async function quickSyncDay(targetDate) {
     cache.dailyTotals[targetDate] = allTransactions.length;
     cache.recentHourly[targetDate] = hourlyData;
     
-    // Recalculate total
-    cache.totalTransactions = Object.values(cache.dailyTotals).reduce((a,b) => a+b, 0);
+    // Fetch REAL blockchain total instead of just cache sum
+    console.log('🔗 Fetching real blockchain total...');
+    let blockchainTotal = 0;
+    try {
+      const countersResponse = await fetch(`https://blockscout.lisk.com/api/v2/addresses/${CONTRACT_ADDRESS}/counters`);
+      if (countersResponse.ok) {
+        const countersData = await countersResponse.json();
+        blockchainTotal = parseInt(countersData.transactions_count) || 0;
+        console.log(`✅ Real blockchain total: ${blockchainTotal} transactions`);
+      } else {
+        console.log('⚠️  Blockchain API failed, using cache sum as fallback');
+        blockchainTotal = Object.values(cache.dailyTotals).reduce((a,b) => a+b, 0);
+      }
+    } catch (error) {
+      console.log('⚠️  Error fetching blockchain total, using cache sum:', error.message);
+      blockchainTotal = Object.values(cache.dailyTotals).reduce((a,b) => a+b, 0);
+    }
+    
+    cache.totalTransactions = blockchainTotal;
     cache.lastUpdate = new Date().toISOString();
     
     // Determine status
@@ -109,11 +126,18 @@ async function quickSyncDay(targetDate) {
     // Save
     fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
     
+    // Calculate daily average excluding first launch day
+    const allDates = Object.keys(cache.dailyTotals).sort();
+    const totalDays = allDates.length;
+    const dailyAverage = totalDays > 1 ? Math.round(cache.totalTransactions / (totalDays - 1)) : 0;
+    
     console.log(`\\n✅ CONCLUÍDO:`);
     console.log(`${targetDate}: ${allTransactions.length} transações`);
     console.log(`Atividade: ${activeHours} horas (até ${lastActiveHour}:00)`);
     console.log(`Status: ${cache.dailyStatus[targetDate]}`);
-    console.log(`Total projeto: ${cache.totalTransactions} transações`);
+    console.log(`Total BLOCKCHAIN: ${cache.totalTransactions} transações`);
+    console.log(`Daily Average: ${dailyAverage} txs/day (excluding first launch day)`);
+    console.log(`Days active: ${totalDays} (calculation uses ${totalDays - 1} full days)`);
     
   } catch (error) {
     console.error('❌ Erro:', error.message);
@@ -122,4 +146,10 @@ async function quickSyncDay(targetDate) {
 
 // Run with command line argument or default to Aug 16
 const targetDate = process.argv[2] || '2025-08-16';
+
+if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+  console.error('❌ Invalid date format. Use YYYY-MM-DD');
+  process.exit(1);
+}
+
 quickSyncDay(targetDate);

@@ -51,15 +51,24 @@ async function quickSyncDay(targetDate) {
         }
       }
       
-      // Check if we've passed the target date
-      const oldestTx = data.items[data.items.length - 1];
-      const oldestDate = new Date(oldestTx.timestamp).toISOString().split('T')[0];
-      
-      if (oldestDate < targetDate) {
-        if (foundTargetDate) {
+      // If we found target date transactions but this page has NONE, we're done
+      if (foundTargetDate && targetTxs.length === 0) {
+        // Check if we've moved past the target date completely
+        const oldestTx = data.items[data.items.length - 1];
+        const oldestDate = new Date(oldestTx.timestamp).toISOString().split('T')[0];
+        
+        if (oldestDate < targetDate) {
           console.log(`✅ Coletadas TODAS as transações de ${targetDate}`);
           break;
-        } else {
+        }
+      }
+      
+      // If we haven't found target date yet but oldest tx is past target date, stop
+      if (!foundTargetDate && targetTxs.length === 0) {
+        const oldestTx = data.items[data.items.length - 1];
+        const oldestDate = new Date(oldestTx.timestamp).toISOString().split('T')[0];
+        
+        if (oldestDate < targetDate) {
           console.log(`❌ Não encontrou transações para ${targetDate}`);
           return;
         }

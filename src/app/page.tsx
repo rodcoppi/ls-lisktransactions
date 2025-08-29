@@ -2,9 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import HourlyBarChart from "../components/HourlyBarChart";
-import DailyTrend from "../components/DailyTrend";
-import ThirtyDayProgress from "../components/ThirtyDayProgress";
 
 interface ContractAnalysis {
   // Precise date-based data
@@ -465,17 +462,8 @@ export default function Dashboard() {
               <div className="text-2xl sm:text-3xl font-bold text-white leading-none">
                 {analysis?.latestDayTxs?.toLocaleString() || 0}
               </div>
-              <div className="text-xs text-slate-500 mt-2">Complete 24h period</div>
             </div>
 
-            {/* 7-Day Period - Mobile Centered */}
-            <div className="bg-slate-800/20 backdrop-blur-sm border border-slate-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center sm:text-left">
-              <div className="text-xs font-medium text-slate-400 mb-2 sm:mb-3 tracking-wider uppercase">7-Day Total</div>
-              <div className="text-2xl sm:text-3xl font-bold text-white leading-none">
-                {analysis?.weeklyTxs?.toLocaleString() || 0}
-              </div>
-              <div className="text-xs text-slate-500 mt-2">{analysis?.weeklyPeriod || 'Recent week'}</div>
-            </div>
 
             {/* Daily Average - Mobile Centered */}
             <div className="bg-slate-800/20 backdrop-blur-sm border border-slate-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center sm:text-left sm:col-span-2 lg:col-span-1">
@@ -492,33 +480,9 @@ export default function Dashboard() {
         {/* Analytics Sections - Mobile Spaced */}
         <div className="space-y-8 sm:space-y-16">
           
-          {/* Hourly Activity */}
-          {analysis && (
-            <HourlyBarChart
-              hourlyData={analysis.hourlyData}
-              date={analysis.latestCompleteDate || ''}
-              dateFormatted={analysis.latestCompleteDateFormatted || ''}
-              totalTx={analysis.latestDayTxs || 0}
-            />
-          )}
 
 
-          {/* Daily Trends */}
-          {analysis && analysis.dailyStatus && (
-            <DailyTrend
-              dailyData={analysis.dailyData}
-              dailyStatus={analysis.dailyStatus}
-              dateRange={Object.keys(analysis.dailyData).sort().slice(-7)}
-            />
-          )}
 
-          {/* 30-Day Rolling Period */}
-          {analysis && analysis.latestCompleteDate && (
-            <ThirtyDayProgress
-              dailyData={analysis.dailyData}
-              latestCompleteDate={analysis.latestCompleteDate}
-            />
-          )}
           
         </div>
       </div>

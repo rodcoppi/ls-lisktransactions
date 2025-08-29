@@ -32,12 +32,16 @@ export async function GET() {
     const dailyTotals = cache.dailyTotals || {};
     const totalTransactions = blockchainTotalTransactions || Object.values(dailyTotals).reduce((a: number, b: unknown) => a + (b as number), 0);
     
-    // ENCONTRAR ÚLTIMO DIA COMPLETO (baseado no dailyStatus)
+    // ENCONTRAR ÚLTIMO DIA COM DADOS (ignorar dias sem atividade)
     const dailyStatus = cache.dailyStatus || {};
     const sortedDates = Object.keys(dailyTotals).sort().reverse();
     
-    // Procurar o último dia que está marcado como "complete"
-    const lastCompleteDate = sortedDates.find(date => dailyStatus[date] === 'complete') || sortedDates[1] || sortedDates[0];
+    // Procurar o último dia que tem transações (> 0) ou está marcado como "complete" ou "incomplete_data"
+    const lastCompleteDate = sortedDates.find(date => {
+      const hasTransactions = (dailyTotals[date] || 0) > 0;
+      const hasValidStatus = dailyStatus[date] === 'complete' || dailyStatus[date] === 'incomplete_data';
+      return hasTransactions || hasValidStatus;
+    }) || sortedDates[1] || sortedDates[0];
     const lastCompleteKey = lastCompleteDate;
     
     const latestDayTxs = dailyTotals[lastCompleteKey] || 0;

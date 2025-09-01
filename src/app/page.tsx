@@ -316,7 +316,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#05202E] via-[#041924] to-[#05202E] text-gray-200">
-      <div className="max-w-6xl mx-auto p-3 sm:p-6">
+      <div className="max-w-4xl mx-auto p-3 sm:p-6">
         {/* Header - Mobile Optimized */}
         <div className="mb-8 sm:mb-12 p-6 sm:p-12 bg-slate-800 border border-gray-600 rounded-xl">
           <div></div>
@@ -436,13 +436,13 @@ export default function Dashboard() {
         </div>
 
         {/* Key Metrics - Mobile Optimized */}
-        <div className="space-y-8 sm:space-y-12 mb-12 sm:mb-16">
+        <div className="space-y-8 sm:space-y-10">
           
           {/* Hero Metric - Total Transactions - Mobile Responsive */}
           <div className="text-center">
-            <div className="inline-block bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl sm:rounded-2xl px-6 py-6 sm:px-12 sm:py-8 w-full max-w-sm sm:max-w-none">
+            <div className="inline-block bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm border border-slate-700/50 rounded-xl sm:rounded-2xl px-6 py-6 sm:px-12 sm:py-8 w-full max-w-md mx-auto shadow-2xl">
               <h2 className="text-xs sm:text-sm font-medium text-slate-400 mb-2 tracking-wider uppercase">Total Transactions</h2>
-              <div className="text-3xl sm:text-6xl font-bold text-white mb-2 leading-none">
+              <div className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent mb-2 leading-none">
                 {contractData?.totalTransactions?.toLocaleString() || 0}
               </div>
               <div className="text-xs sm:text-sm text-slate-400">
@@ -451,40 +451,43 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Secondary Metrics - Mobile Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+          {/* Secondary Metrics - Centered Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
             
             {/* Latest Day - Mobile Centered */}
-            <div className="bg-slate-800/20 backdrop-blur-sm border border-slate-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center sm:text-left">
+            <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-sm border border-slate-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center">
               <div className="text-xs font-medium text-slate-400 mb-2 sm:mb-3 tracking-wider uppercase">
-                {analysis?.latestCompleteDateFormatted || 'Latest Day'}
+                Latest Day
               </div>
-              <div className="text-2xl sm:text-3xl font-bold text-white leading-none">
+              <div className="text-2xl sm:text-3xl font-bold text-white leading-none mb-1">
                 {analysis?.latestDayTxs?.toLocaleString() || 0}
+              </div>
+              <div className="text-xs text-slate-500">
+                {analysis?.latestCompleteDateFormatted || 'Loading...'}
               </div>
             </div>
 
-
             {/* Daily Average - Mobile Centered */}
-            <div className="bg-slate-800/20 backdrop-blur-sm border border-slate-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center sm:text-left sm:col-span-2 lg:col-span-1">
-              <div className="text-xs font-medium text-slate-400 mb-2 sm:mb-3 tracking-wider uppercase">Daily Average</div>
-              <div className="text-2xl sm:text-3xl font-bold text-emerald-400 leading-none">
+            <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/30 backdrop-blur-sm border border-emerald-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center">
+              <div className="text-xs font-medium text-emerald-400 mb-2 sm:mb-3 tracking-wider uppercase">Daily Average</div>
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-400 leading-none mb-1">
                 {analysis?.avgTxsPerDay?.toLocaleString() || 0}
               </div>
-              <div className="text-xs text-slate-500 mt-2">Per active day</div>
+              <div className="text-xs text-emerald-400/60">Per active day</div>
+            </div>
+            
+            {/* Monthly Total - New */}
+            <div className="bg-gradient-to-br from-purple-900/20 to-purple-950/30 backdrop-blur-sm border border-purple-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center">
+              <div className="text-xs font-medium text-purple-400 mb-2 sm:mb-3 tracking-wider uppercase">August Total</div>
+              <div className="text-2xl sm:text-3xl font-bold text-purple-400 leading-none mb-1">
+                {analysis?.monthlyTxs?.toLocaleString() || 0}
+              </div>
+              <div className="text-xs text-purple-400/60">Month to date</div>
             </div>
 
           </div>
         </div>
 
-        {/* Analytics Sections - Mobile Spaced */}
-        <div className="space-y-8 sm:space-y-16">
-          
-
-
-
-          
-        </div>
       </div>
     </div>
   );

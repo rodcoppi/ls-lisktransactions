@@ -378,16 +378,6 @@ export default function Dashboard() {
               <span className="text-gray-300 text-sm text-center">Pre-loaded historical data</span>
             </div>
             
-            {/* Action Buttons - Only Advanced Analytics */}
-            <div className="flex justify-center">
-              <a 
-                href="/analytics"
-                className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:bg-purple-400 inline-flex items-center justify-center gap-2"
-              >
-                📊 Analytics
-              </a>
-            </div>
-            
             {/* Status Block - Centered on both mobile and desktop */}
             <div className="bg-emerald-400/10 border border-emerald-400/30 rounded-lg px-3 py-2 sm:px-4 text-center">
               <p className="text-emerald-400 text-sm font-medium">
@@ -452,7 +442,7 @@ export default function Dashboard() {
           </div>
 
           {/* Secondary Metrics - Centered Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
             
             {/* Latest Day - Mobile Centered */}
             <div className="bg-gradient-to-br from-slate-800/30 to-slate-900/30 backdrop-blur-sm border border-slate-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center">
@@ -476,14 +466,6 @@ export default function Dashboard() {
               <div className="text-xs text-emerald-400/60">Per active day</div>
             </div>
             
-            {/* Monthly Total - New */}
-            <div className="bg-gradient-to-br from-purple-900/20 to-purple-950/30 backdrop-blur-sm border border-purple-700/30 rounded-lg sm:rounded-xl p-4 sm:p-6 text-center">
-              <div className="text-xs font-medium text-purple-400 mb-2 sm:mb-3 tracking-wider uppercase">August Total</div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-400 leading-none mb-1">
-                {analysis?.monthlyTxs?.toLocaleString() || 0}
-              </div>
-              <div className="text-xs text-purple-400/60">Month to date</div>
-            </div>
 
           </div>
         </div>

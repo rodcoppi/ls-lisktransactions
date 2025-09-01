@@ -384,7 +384,7 @@ export default function Dashboard() {
                 href="/analytics"
                 className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:bg-purple-400 inline-flex items-center justify-center gap-2"
               >
-                🧠 <span className="hidden xs:inline">Advanced Analytics</span><span className="xs:hidden">Analytics</span>
+                📊 Analytics
               </a>
             </div>
             

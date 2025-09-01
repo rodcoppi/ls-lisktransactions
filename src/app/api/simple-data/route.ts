@@ -82,7 +82,14 @@ export async function GET() {
       recentHourly: cache.recentHourly || {},
       dailyStatus: cache.dailyStatus || {},
       totalDaysActive: Object.keys(dailyTotals).length,
-      avgTxsPerDay: Math.round(totalTransactions / Math.max(1, Object.keys(dailyTotals).length - 1)), // -1 porque primeiro dia não conta
+      avgTxsPerDay: (() => {
+        // Calculate days since deploy (August 4, 2025) and divide total by (days - 1)
+        const deployDate = new Date('2025-08-04');
+        const today = new Date();
+        const diffTime = today.getTime() - deployDate.getTime();
+        const daysSinceDeploy = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        return Math.round(totalTransactions / Math.max(1, daysSinceDeploy - 1));
+      })(),
       lastUpdate: cache.lastUpdate || new Date().toISOString(),
       success: true
     });
